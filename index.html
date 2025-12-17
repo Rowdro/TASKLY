@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Taskly — To-Do App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Taskly.css">
+</head>
+
+<body>
+  <div class="frame" id="frame">
+    <div class="page">
+      <!-- LOGIN PAGE -->
+      <div id="loginPage" class="content auth-area">
+        <div class="logo-top-left">Taskly</div>
+        <div class="welcome">Welcome back! <br>Let's make today productive.</div>
+        <input id="loginEmail" type="email" placeholder="Email" />
+        <div class="password-wrapper">
+          <input id="loginPass" type="password" placeholder="Password" />
+          <span class="toggle-password" id="toggleLoginPass">👁️‍🗨️</span>
+        </div>
+        <div class="remember-me">
+          <input type="checkbox" id="rememberMe" /> Remember me
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+          <span class="link" id="forgotPassword" style="font-size: 14px;">Forgot Password?</span>
+          <span class="link" id="goRegister" style="font-size: 14px;">Create Account</span>
+        </div>
+        <button class="btn-primary" id="loginBtn">Sign In</button>
+
+        <!-- Google Sign-In Button -->
+        <div class="google-signin-wrapper" style="margin-top: 20px;">
+          <div
+            style="text-align: center; color: #666; margin-bottom: 10px; font-size: 16px; font-weight: 600; position: relative;">
+            <span style="background: white; padding: 0 10px; position: relative; z-index: 1;">OR</span>
+            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #ddd; z-index: 0;">
+            </div>
+          </div>
+          <button class="google-btn" id="googleSign">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+
+      <!-- REGISTER PAGE -->
+      <div id="registerPage" class="content auth-area hidden">
+        <div class="logo-top-left">Taskly</div>
+        <div class="welcome">Create Account <br>Start organizing your tasks today.</div>
+        <input id="registerFirstName" type="text" placeholder="First Name" />
+        <input id="registerLastName" type="text" placeholder="Last Name" />
+        <input id="registerEmail" type="email" placeholder="Email" />
+        <div class="password-wrapper">
+          <input id="registerPass" type="password" placeholder="Password" />
+          <span class="toggle-password" id="toggleRegisterPass">👁️‍🗨️</span>
+        </div>
+        <div class="password-wrapper">
+          <input id="registerConfirm" type="password" placeholder="Confirm Password" />
+          <span class="toggle-password" id="toggleRegisterConfirm">👁️‍🗨️</span>
+        </div>
+        <button class="btn-primary" id="registerBtn">Register</button>
+
+        <!-- Google Sign-Up Button -->
+        <div class="google-signin-wrapper" style="margin-top: 20px;">
+          <div
+            style="text-align: center; color: #666; margin-bottom: 10px; font-size: 16px; font-weight: 600; position: relative;">
+            <span style="background: white; padding: 0 10px; position: relative; z-index: 1;">OR</span>
+            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #ddd; z-index: 0;">
+            </div>
+          </div>
+          <button class="google-btn" id="googleRegister">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+            Sign up with Google
+          </button>
+        </div>
+
+        <div class="muted" style="text-align: center; margin-top: 16px;">
+          Already have an account? <span class="link" id="goLogin">Sign In</span>
+        </div>
+      </div>
+
+      <!-- FORGOT PASSWORD PAGE -->
+      <div id="forgotPasswordPage" class="content auth-area hidden">
+        <div class="logo-top-left">Taskly</div>
+        <div class="welcome">Reset Password <br>Enter your email to reset password.</div>
+        <input id="forgotEmail" type="email" placeholder="Enter your email" />
+        <button class="btn-primary" id="resetPasswordBtn">Reset Password</button>
+        <div class="muted" style="text-align: center; margin-top: 16px;">
+          Remember your password? <span class="link" id="backToLogin">Sign In</span>
+        </div>
+      </div>
+
+      <!-- CHANGE PASSWORD PAGE -->
+      <div id="changePasswordPage" class="content auth-area hidden">
+        <div class="logo-top-left">Taskly</div>
+        <div class="welcome">Change Password</div>
+
+        <div class="password-wrapper">
+          <input id="currentPassword" type="password" placeholder="Current Password" />
+          <span class="toggle-password" onclick="
+            const input = document.getElementById('currentPassword');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            this.textContent = input.type === 'password' ? '👁️‍🗨️' : '🙈';
+          ">👁️‍🗨️</span>
+        </div>
+
+        <div class="password-wrapper">
+          <input id="newPassword" type="password" placeholder="New Password (min 6 characters)" />
+          <span class="toggle-password" onclick="
+            const input = document.getElementById('newPassword');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            this.textContent = input.type === 'password' ? '👁️‍🗨️' : '🙈';
+          ">👁️‍🗨️</span>
+        </div>
+
+        <div class="password-wrapper">
+          <input id="confirmPassword" type="password" placeholder="Confirm New Password" />
+          <span class="toggle-password" onclick="
+            const input = document.getElementById('confirmPassword');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            this.textContent = input.type === 'password' ? '👁️‍🗨️' : '🙈';
+          ">👁️‍🗨️</span>
+        </div>
+
+        <button class="btn-primary" onclick="changePassword()">Update Password</button>
+
+        <div class="muted" style="text-align: center; margin-top: 20px;">
+          <span class="link" onclick="showPage('settingsPage')">← Back to Settings</span>
+        </div>
+      </div>
+
+      <!-- DASHBOARD PAGE -->
+      <div id="dashboardPage" class="dashboard-page hidden">
+        <div class="header">
+          <div class="header-bar" style="align-items:center;">
+            <button id="hamburger" class="hamburger" aria-label="menu"><span class="line">☰</span></button>
+            <div class="search-expander" id="searchExpander" style="margin-left:8px;">
+              <button class="btn-icon" id="searchIcon" title="Search">🔍</button>
+              <input id="searchInput" class="search-input" placeholder="Search tasks..." />
+            </div>
+          </div>
+          <div class="header-bar" style="margin-left:auto;">
+            <div class="icon-box">
+              <button class="btn-icon" id="notifyIcon" title="Notifications">🔔</button>
+              <button class="btn-icon" id="profileIcon" title="Profile">👤</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- short colored sidebar -->
+        <div id="sidebar" class="sidebar" aria-hidden="true">
+          <button id="closeSidebarBtn" class="close-sidebar-btn">✖</button>
+          <h3>Taskly</h3>
+          <div class="short-box">
+            <div class="nav-item" id="navAbout">About</div>
+            <div class="nav-item" id="navProfile">Profile</div>
+            <div class="nav-item" id="navPrivacy">Privacy & policy</div>
+            <div class="nav-item" id="navTrash">Archive</div>
+            <div class="nav-item" id="navSettings">Settings</div>
+            <div class="nav-item" id="navTutorial">Show Tutorial</div>
+          </div>
+        </div>
+
+        <!-- tasks -->
+        <div class="tasks-container" id="tasksContainer"></div>
+
+        <!-- add button -->
+        <button class="add-task-btn" id="openAddTask" title="Add task">＋</button>
+
+        <!-- backdrop -->
+        <div class="backdrop" id="backdrop"></div>
+
+        <!-- add/edit card (slide-up tall) -->
+        <div class="add-task-card" id="addTaskCard" aria-hidden="true">
+          <h2 id="addCardTitle">Add New Task</h2>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <input id="taskTitle" type="text" placeholder="Task title" />
+            <select id="taskPriority" style="width:120px;padding:10px;border-radius:8px;border:1px solid #ccc;">
+              <option value="" disabled selected>Priority</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <textarea id="taskDescription" placeholder="Description"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <div style="flex:1;">
+              <label style="font-weight:600;color:var(--text-primary);margin-bottom:4px;display:block;">Date</label>
+              <input id="taskDate" type="date"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);" />
+            </div>
+            <div style="width:120px;">
+              <label style="font-weight:600;color:var(--text-primary);margin-bottom:4px;display:block;">Time</label>
+              <input id="taskTime" type="time"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);" />
+            </div>
+          </div>
+          <label style="font-weight:700;margin-bottom:6px;display:block;">Reminder</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="taskReminder"
+              style="width:170px;padding:10px;border-radius:8px;border:1px solid var(--border-color);">
+              <option value="none" selected>None</option>
+              <option value="5">5 minutes before</option>
+              <option value="10">10 minutes before</option>
+              <option value="30">30 minutes before</option>
+              <option value="custom">Custom (minutes)</option>
+            </select>
+            <input id="taskReminderCustom" type="number" min="1" placeholder="Minutes"
+              style="width:110px;display:none;padding:10px;border-radius:8px;border:1px solid var(--border-color);" />
+          </div>
+          <div class="add-footer">
+            <div style="display:flex;gap:8px;">
+              <button class="btn-primary" id="saveTaskBtn">Save</button>
+              <button class="task-back" id="cancelAddBtn">Cancel</button>
+            </div>
+          </div>
+          <div class="close-task-form" id="closeTaskCard" title="Close">×</div>
+        </div>
+
+        <!-- profile popup (bigger) -->
+        <div class="pop-panel" id="profilePanel" aria-hidden="true">
+          <div class="panel-content">
+            <div class="panel-header" id="profileNameText">No name</div>
+            <div style="color:var(--text-secondary);margin-bottom:12px;" id="profileEmailText">noemail@example.com</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <button class="task-back" id="openEditProfileFromPopup">View Profile</button>
+            </div>
+            <div>
+              <button id="logoutBtn" class="logout-btn">Log out</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- notifications popup -->
+        <div class="pop-panel" id="notifyPanel" aria-hidden="true" style="right:60px;">
+          <div class="panel-content">
+            <div class="panel-header">Notifications</div>
+            <div id="notifyList"></div>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+              <button class="task-back" id="clearNotifications">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE PAGE -->
+      <div id="profilePage" class="profile-page hidden">
+        <div class="profile-header">
+          <button id="closeProfilePage" class="back-btn">←</button>
+          <h2>Profile</h2>
+        </div>
+        <div class="profile-content">
+          <div class="profile-photo-section">
+            <img id="profilePageImg" src="https://via.placeholder.com/200" alt="profile">
+          </div>
+
+          <div class="profile-info">
+            <h1 id="profilePageName">Loading...</h1>
+            <p id="profilePageEmail">Loading email...</p>
+            <p id="profilePageJoinDate" style="color: var(--text-secondary); font-size: 14px;">Loading...</p>
+          </div>
+
+          <div class="profile-bio">
+            <h3>Bio</h3>
+            <p id="profilePageBio">No bio yet. Click "Edit Profile" to add one!</p>
+          </div>
+
+          <div class="profile-stats">
+            <div class="stat-item">
+              <h4>Tasks</h4>
+              <p id="profileTaskStats">0 tasks</p>
+            </div>
+            <div class="stat-item">
+              <h4>Joined</h4>
+              <p id="profilePageJoinDateShort">Recently</p>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button id="profilePageEditBtn" class="primary-action">Edit Profile</button>
+            <button onclick="goBack()">Back to Dashboard</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Profile centered card modal -->
+      <div id="editProfilePage" class="edit-profile-page hidden">
+        <div class="edit-header">
+          <button id="closeEditPage" class="back-btn">←</button>
+          <h2>Edit Profile</h2>
+        </div>
+        <div class="edit-content">
+          <div class="edit-photo">
+            <img id="editProfilePreviewFull" src="https://via.placeholder.com/200" alt="profile">
+            <input id="editImageInputFull" type="file" accept="image/*" />
+          </div>
+          <label>First Name</label>
+          <input id="editFirstFull" type="text" placeholder="First name">
+          <label>Last Name</label>
+          <input id="editLastFull" type="text" placeholder="Last name">
+          <label>Bio</label>
+          <textarea id="editBioFull" placeholder="Tell us about yourself..."></textarea>
+          <button id="saveEditFull" class="btn-primary" style="margin-top:20px;">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settingsPage" class="settings-page hidden">
+    <div class="settings-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h2>Settings</h2>
+    </div>
+    <div class="settings-content">
+      <div class="settings-section">
+        <h3>Appearance</h3>
+
+        <div class="setting-item">
+          <label>Theme</label>
+          <div class="setting-control">
+            <div class="theme-preview-container">
+              <div class="theme-preview light active" data-theme="light" onclick="toggleTheme('light')"
+                title="Light Theme"></div>
+              <div class="theme-preview dark" data-theme="dark" onclick="toggleTheme('dark')" title="Dark Theme"></div>
+              <div class="theme-preview blue" data-theme="blue" onclick="toggleTheme('blue')" title="Blue Theme"></div>
+              <div class="theme-preview green" data-theme="green" onclick="toggleTheme('green')" title="Green Theme">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Account</h3>
+
+        <div class="setting-item">
+          <label>Email Address</label>
+          <div class="setting-control">
+            <button onclick="openEditEmailModal()" class="setting-btn primary">
+              Change Email
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label>Password</label>
+          <div class="setting-control">
+            <button onclick="openChangePasswordPage()" class="setting-btn primary">
+              Change Password
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Notifications</h3>
+
+        <div class="setting-item">
+          <label>Task Reminders</label>
+          <div class="setting-control">
+            <select id="notificationSettings" onchange="alert('Notification settings saved!')">
+              <option value="all">All reminders</option>
+              <option value="important">Important only</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label>Email Notifications</label>
+          <div class="setting-control">
+            <select onchange="alert('Email settings saved!')">
+              <option value="weekly">Weekly digest</option>
+              <option value="daily">Daily summary</option>
+              <option value="none">No emails</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Data & Privacy</h3>
+
+        <div class="setting-item">
+          <label>Export Data</label>
+          <div class="setting-control">
+            <button onclick="
+              const data = {
+                tasks: JSON.parse(localStorage.getItem('tasklyTasks') || '[]'),
+                user: JSON.parse(localStorage.getItem('tasklyUser') || '{}'),
+                settings: {
+                  theme: localStorage.getItem('tasklyTheme')
+                }
+              };
+              const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'taskly-backup-' + new Date().toISOString().split('T')[0] + '.json';
+              a.click();
+              alert('Data exported successfully! Check your downloads folder.');
+            " class="setting-btn success">
+              Export All Data
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label>Show Tutorial Again</label>
+          <div class="setting-control">
+            <button onclick="
+              localStorage.removeItem('tasklyTutorialSeen');
+              alert('Tutorial reset! It will show on next login or you can view it now from the sidebar.');
+            " class="setting-btn primary">
+              Reset Tutorial
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label>Clear Data</label>
+          <div class="setting-control">
+            <button onclick="
+              if(confirm('⚠️ WARNING: This will delete ALL your tasks, profile data, and settings. This action cannot be undone.\n\nAre you sure you want to continue?')) {
+                localStorage.clear();
+                alert('All data cleared successfully! The app will reload.');
+                location.reload();
+              }
+            " class="setting-btn danger">
+              Clear All Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>App Information</h3>
+        <div class="setting-item">
+          <label>App Name</label>
+          <div class="setting-info">Taskly — To-Do Manager</div>
+        </div>
+        <div class="setting-item">
+          <label>Version</label>
+          <div class="setting-info">1.2.1 — December 2025</div>
+        </div>
+        <div class="setting-item">
+          <label>Developer</label>
+          <div class="setting-info">Rowdro Mrong</div>
+        </div>
+        <div class="setting-item">
+          <label>Contact</label>
+          <div class="setting-info">
+            <a href="mailto:mrongrowdro23@gmail.com" style="color:var(--accent-color);text-decoration:none;">
+              mrongrowdro23@gmail.com
+            </a>
+          </div>
+        </div>
+        <div class="setting-item">
+          <label>Storage</label>
+          <div class="setting-info">Local browser storage</div>
+        </div>
+      </div>
+
+      <div class="copyright">© 2025 Rowdro Mrong — Taskly App</div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div id="aboutPage" class="about-page hidden">
+    <div class="about-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h2>About</h2>
+    </div>
+    <div class="about-content">
+      <h3>Taskly — Your Personal Productivity Companion</h3>
+      <p><strong>Version 1.3 – Task Management Redefined</strong></p>
+
+      <h4>🌟 Our Mission</h4>
+      <p>Taskly was created to simplify task management while keeping your data private and secure. We believe
+        productivity tools should be intuitive, beautiful, and respect your privacy.</p>
+
+      <h4>✨ Key Features</h4>
+      <ul>
+        <li><strong>Smart Task Management</strong> – Create, edit, and organize tasks with priorities (High/Medium/Low)
+        </li>
+        <li><strong>Swipe Gestures</strong> – Swipe left to archive, swipe right to delete (Gmail-style interface)</li>
+        <li><strong>Smart Reminders</strong> – Set custom reminders that alert you when tasks are due</li>
+        <li><strong>Multiple Themes</strong> – Choose from Light, Dark, Blue, and Green themes</li>
+        <li><strong>Complete Profile System</strong> – Customize your profile with photo, bio, and personal details</li>
+        <li><strong>Archive & Recovery</strong> – Archived tasks are safely stored for 30 days before auto-cleanup</li>
+        <li><strong>Data Export</strong> – Export all your tasks and settings as JSON backup</li>
+        <li><strong>Offline-First</strong> – Works completely offline, all data stored locally on your device</li>
+        <li><strong>Responsive Design</strong> – Perfect experience on mobile, tablet, and desktop</li>
+        <li><strong>Secure Authentication</strong> – Email/password login with simulated Google Sign-In for demo</li>
+      </ul>
+
+      <h4>🔒 Privacy First Approach</h4>
+      <p>Unlike other task managers, Taskly stores everything locally on your device. Your tasks, profile information,
+        and settings never leave your browser. We don't track you, sell your data, or show ads.</p>
+
+      <h4>🛠 Technology Stack</h4>
+      <ul>
+        <li><strong>Frontend</strong> – Vanilla HTML5, CSS3, and JavaScript (ES6+)</li>
+        <li><strong>Storage</strong> – Browser localStorage with JSON serialization</li>
+        <li><strong>Icons</strong> – Native emoji and custom SVG elements</li>
+        <li><strong>Fonts</strong> – Inter font family with Pacifico for branding</li>
+        <li><strong>Animations</strong> – CSS transitions and keyframe animations</li>
+      </ul>
+
+      <h4>📱 Platform Support</h4>
+      <p>Taskly works on all modern browsers including Chrome, Firefox, Safari, and Edge. The app is PWA-ready and can
+        be installed on your device for quick access.</p>
+
+      <h4>🔄 Update History</h4>
+      <ul>
+        <li><strong>v1.3 (Current)</strong> – Added archive system, improved swipe gestures, enhanced profile management
+        </li>
+        <li><strong>v1.2</strong> – Added multiple themes, email change functionality, data export/import</li>
+        <li><strong>v1.1</strong> – Added profile system with bio, task statistics, reminder notifications</li>
+        <li><strong>v1.0</strong> – Initial release with basic task management and authentication</li>
+      </ul>
+
+      <h4>👨‍💻 Development Philosophy</h4>
+      <p>Taskly follows these core principles:</p>
+      <ol>
+        <li><strong>Simplicity</strong> – Clean interface without unnecessary complexity</li>
+        <li><strong>Privacy</strong> – Your data belongs to you, not to us</li>
+        <li><strong>Performance</strong> – Fast loading, smooth animations, minimal resource usage</li>
+        <li><strong>Reliability</strong> – Works offline, data persists across sessions</li>
+        <li><strong>Accessibility</strong> – Designed to be usable by everyone</li>
+      </ol>
+
+      <h4>🚀 Future Plans</h4>
+      <p>We're constantly improving Taskly. Planned features include:</p>
+      <ul>
+        <li>Task categories and tags</li>
+        <li>Recurring tasks (daily, weekly, monthly)</li>
+        <li>Collaborative task lists (share with friends/family)</li>
+        <li>Dark mode scheduling (auto-switch at sunset)</li>
+        <li>Cloud sync (optional, end-to-end encrypted)</li>
+        <li>Mobile apps (iOS & Android)</li>
+        <li>Browser extension for quick task entry</li>
+      </ul>
+
+      <h4>💝 Support & Feedback</h4>
+      <p>Taskly is free to use and will always remain free. If you enjoy using it, consider:</p>
+      <ul>
+        <li>Sharing it with friends and colleagues</li>
+        <li>Providing feedback for improvements</li>
+        <li>Reporting any bugs you encounter</li>
+        <li>Suggesting new features on our wishlist</li>
+      </ul>
+
+      <h4>👤 Developer</h4>
+      <p>Built with ❤️ by <strong>Rowdro Mrong</strong> – A passionate developer who believes in creating tools that
+        respect user privacy and enhance productivity.</p>
+      <p>Contact: <a href="mailto:mrongrowdro23@gmail.com"
+          style="color:var(--accent-color);">mrongrowdro23@gmail.com</a></p>
+
+      <div class="copyright">
+        © 2025 Rowdro Mrong – Taskly App<br>
+        <small>All rights reserved. This app is provided "as-is" without any warranties.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIVACY & POLICY -->
+  <div id="privacyPage" class="privacy-page hidden">
+    <div class="privacy-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h2>Privacy & Policy</h2>
+    </div>
+    <div class="privacy-content">
+      <h3>Taskly Privacy Policy</h3>
+      <p><strong>Effective Date:</strong> December 2025<br>
+        <strong>Last Updated:</strong> December 2025
+      </p>
+
+      <h4>1. Our Privacy Philosophy</h4>
+      <p>At Taskly, we believe your task data is personal and private. We've designed Taskly from the ground up to
+        respect your privacy. Unlike other task managers, we don't collect, analyze, or sell your data. Everything stays
+        on your device.</p>
+
+      <h4>2. What Information We Collect (Hint: Almost Nothing)</h4>
+      <p><strong>Local Storage Only:</strong> Taskly stores the following information exclusively in your browser's
+        localStorage:</p>
+      <ul>
+        <li><strong>Tasks</strong> – Title, description, due date, priority, reminders</li>
+        <li><strong>Profile Information</strong> – Name, email (for login), profile picture, bio</li>
+        <li><strong>App Settings</strong> – Theme preference, notification settings</li>
+        <li><strong>Archive</strong> – Archived tasks (stored locally for 30 days)</li>
+        <li><strong>Authentication</strong> – Login credentials (encrypted in localStorage)</li>
+      </ul>
+      <p><strong>Important:</strong> We don't have servers collecting this data. It never leaves your device unless you
+        explicitly export it.</p>
+
+      <h4>3. How We Use Your Information</h4>
+      <p>Your data is used solely to provide Taskly's functionality:</p>
+      <ul>
+        <li><strong>Task Display</strong> – Showing your tasks in the dashboard</li>
+        <li><strong>Reminders</strong> – Browser notifications for upcoming tasks</li>
+        <li><strong>Personalization</strong> – Applying your chosen theme and settings</li>
+        <li><strong>Profile Management</strong> – Displaying your name and photo</li>
+        <li><strong>Search</strong> – Filtering tasks based on your search queries</li>
+      </ul>
+
+      <h4>4. Data Storage & Retention</h4>
+      <p><strong>Storage Location:</strong> All data is stored in your browser's localStorage.</p>
+      <p><strong>Retention Period:</strong></p>
+      <ul>
+        <li>Active tasks: Stored until you delete or archive them</li>
+        <li>Archived tasks: Automatically cleared after 30 days</li>
+        <li>Profile data: Stored until you delete your account</li>
+        <li>Settings: Persist until you change or clear them</li>
+      </ul>
+      <p><strong>Data Deletion:</strong> You can delete all data at any time using the "Clear All Data" option in
+        Settings.</p>
+
+      <h4>5. Cookies & Local Storage</h4>
+      <p>Taskly uses browser localStorage (not cookies) for:</p>
+      <ul>
+        <li><strong>Session Management</strong> – Keeping you logged in during your session</li>
+        <li><strong>"Remember Me" Feature</strong> – Saving your email for convenience</li>
+        <li><strong>Theme Preferences</strong> – Remembering your chosen theme</li>
+        <li><strong>Task Data</strong> – Storing all your tasks and settings</li>
+      </ul>
+      <p>You can clear localStorage at any time through your browser settings or using Taskly's "Clear All Data"
+        feature.</p>
+
+      <h4>6. Third-Party Services</h4>
+      <p><strong>Google Sign-In Simulation:</strong> The current version simulates Google authentication for
+        demonstration purposes. In a production environment, this would integrate with Firebase Authentication, which
+        would have its own privacy policy.</p>
+      <p><strong>No Analytics:</strong> We don't use Google Analytics, Facebook Pixel, or any other tracking services.
+      </p>
+      <p><strong>No Ad Networks:</strong> Taskly is completely ad-free.</p>
+
+      <h4>7. Data Export & Backup</h4>
+      <p>You have full control over your data:</p>
+      <ul>
+        <li><strong>Export:</strong> Export all your data as a JSON file via Settings</li>
+        <li><strong>Backup:</strong> Regular exports serve as your backup system</li>
+        <li><strong>Portability:</strong> Your data is in standard JSON format for easy migration</li>
+      </ul>
+
+      <h4>8. Security Measures</h4>
+      <p>While Taskly stores data locally, we implement several security practices:</p>
+      <ul>
+        <li><strong>Password Protection</strong> – Passwords are stored encrypted in localStorage</li>
+        <li><strong>Browser Security</strong> – Leverages browser's built-in security features</li>
+        <li><strong>Input Validation</strong> – All user inputs are sanitized to prevent injection attacks</li>
+        <li><strong>Session Management</strong> – Proper session handling prevents unauthorized access</li>
+      </ul>
+      <p><strong>Note:</strong> For maximum security, we recommend using Taskly on your personal devices only.</p>
+
+      <h4>9. Children's Privacy</h4>
+      <p>Taskly is not specifically designed for children under 13. We don't knowingly collect personal information from
+        children. Since all data is stored locally, parents have full visibility and control over their children's data.
+      </p>
+
+      <h4>10. Your Rights & Controls</h4>
+      <p>You have complete control over your data:</p>
+      <ul>
+        <li><strong>Access:</strong> View all your data within the app</li>
+        <li><strong>Correction:</strong> Edit tasks and profile information anytime</li>
+        <li><strong>Deletion:</strong> Delete individual tasks or all data at once</li>
+        <li><strong>Export:</strong> Download your complete data package</li>
+        <li><strong>Opt-out:</strong> Stop using the app and clear localStorage</li>
+      </ul>
+
+      <h4>11. Policy Changes</h4>
+      <p>We will update this privacy policy if we add new features that change how we handle data. Since Taskly is a
+        local-first app, significant changes to data handling will be clearly communicated within the app.</p>
+
+      <h4>12. Contact Information</h4>
+      <p>For privacy-related questions, concerns, or data access requests:</p>
+      <p><strong>Email:</strong> <a href="mailto:mrongrowdro23@gmail.com"
+          style="color:var(--accent-color);">mrongrowdro23@gmail.com</a><br>
+        <strong>Response Time:</strong> We aim to respond within 48 hours
+      </p>
+
+      <h4>13. Legal Compliance</h4>
+      <p>Taskly is designed to comply with:</p>
+      <ul>
+        <li><strong>GDPR Principles</strong> – Data minimization, purpose limitation, storage limitation</li>
+        <li><strong>CCPA Spirit</strong> – Right to know, delete, and opt-out</li>
+        <li><strong>Privacy by Design</strong> – Privacy considerations from the initial design phase</li>
+      </ul>
+
+      <div class="copyright">
+        © 2025 Rowdro Mrong – Taskly Privacy Policy<br>
+        <small>This policy applies to Taskly version 1.3 and later. By using Taskly, you acknowledge that your data is
+          stored locally on your device and that you have read and understood this privacy policy.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRASH/ARCHIVE PAGE -->
+  <div id="trashPage" class="trash-page hidden">
+    <div class="trash-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h2>Archive / Trash</h2>
+    </div>
+    <div class="trash-content">
+      <div class="trash-stats">
+        <div class="stat-item">
+          <h4>Archived Tasks</h4>
+          <p id="trashCount">0 tasks</p>
+        </div>
+        <div class="stat-item">
+          <h4>Storage Used</h4>
+          <p id="trashSize">0 KB</p>
+        </div>
+      </div>
+
+      <div class="trash-actions">
+        <button id="restoreAllBtn" class="task-back"
+          style="background: var(--success-color); border-color: var(--success-color);">
+          Restore All
+        </button>
+        <button id="emptyTrashBtn" class="task-back"
+          style="background: var(--danger-color); border-color: var(--danger-color);">
+          Empty Trash
+        </button>
+      </div>
+
+      <div id="trashContainer" class="tasks-container" style="margin-top: 20px;"></div>
+
+      <div style="text-align: center; margin-top: 40px; color: var(--text-secondary); font-size: 14px;">
+        <p>Swipe left on tasks to archive them. Archived tasks are stored here for 30 days.</p>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <!-- TUTORIAL OVERLAY -->
+  <div id="tutorialOverlay" class="tutorial-overlay">
+    <div class="tutorial-content">
+      <div class="tutorial-header">
+        <h2>Welcome to Taskly! 👋</h2>
+        <button class="close-tutorial" id="closeTutorial">×</button>
+      </div>
+
+      <div id="tutorialSteps">
+        <!-- Step 1 will be loaded by JavaScript -->
+      </div>
+
+      <div class="tutorial-progress" id="tutorialProgress">
+        <!-- Progress dots will be added by JavaScript -->
+      </div>
+
+      <div class="tutorial-buttons">
+        <button class="tutorial-btn skip" id="skipTutorial">Skip Tutorial</button>
+        <button class="tutorial-btn next" id="nextTutorial">Next →</button>
+      </div>
+    </div>
+  </div>
+
+
+  
+
+
+  <script src="Taskly.js"></script>
+</body>
+
+</html>
