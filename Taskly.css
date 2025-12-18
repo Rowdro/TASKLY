@@ -14,70 +14,13 @@
   --glow-color: rgba(255, 193, 7, 0.6);
 }
 
-/* ================== SMOOTH ANIMATIONS ================== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
-  transition: all 0.3s ease-in-out !important;
 }
 
-/* ================== ANIMATION KEYFRAMES ================== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-@keyframes expandSearch {
-  from {
-    width: 0;
-    opacity: 0;
-  }
-  to {
-    width: 170px;
-    opacity: 1;
-  }
-}
-
-/* ================== BASE STYLES ================== */
 html,
 body {
   height: 100%;
@@ -140,7 +83,6 @@ button {
   z-index: 50;
 }
 
-/* ================== AUTH PAGES ================== */
 .auth-area {
   display: flex;
   flex-direction: column;
@@ -153,7 +95,6 @@ button {
   border-radius: 16px;
   box-shadow: 0 6px 20px var(--shadow-color);
   border: 2px solid var(--border-color);
-  animation: fadeIn 0.4s ease-out;
 }
 
 .welcome {
@@ -180,7 +121,7 @@ select {
   font-size: 15px;
   background: var(--card-bg);
   color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 
 input[type="email"]:focus,
@@ -206,11 +147,6 @@ select:focus {
   cursor: pointer;
   font-size: 18px;
   color: var(--text-secondary);
-  transition: transform 0.2s;
-}
-
-.toggle-password:hover {
-  transform: translateY(-50%) scale(1.1);
 }
 
 .btn-primary {
@@ -222,37 +158,13 @@ select:focus {
   font-weight: 800;
   font-size: 20px;
   border: 2px solid var(--accent-secondary);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  position: relative;
-  overflow: hidden;
+  transition: all .2s;
 }
 
 .btn-primary:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
-}
-
-/* Loading state for buttons */
-.btn-primary.loading {
-  pointer-events: none;
-  opacity: 0.8;
-  padding-right: 50px;
-}
-
-.btn-primary.loading::after {
-  content: '';
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
+  transform: translateY(-2px);
 }
 
 .google-btn {
@@ -270,24 +182,17 @@ select:focus {
   border: 2px solid var(--border-color);
   margin-top: 8px;
   font-size: 20px;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .google-btn:hover {
   border-color: var(--accent-color);
   background: var(--bg-primary);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px var(--shadow-color);
 }
 
 .google-btn img {
   width: 20px;
   height: 20px;
-  transition: transform 0.3s;
-}
-
-.google-btn:hover img {
-  transform: scale(1.1);
 }
 
 .muted {
@@ -318,7 +223,6 @@ select:focus {
   margin-bottom: 8px;
 }
 
-/* ================== DASHBOARD PAGE ================== */
 .dashboard-page {
   flex: 1;
   padding: 18px;
@@ -328,15 +232,13 @@ select:focus {
   background: var(--bg-primary);
 }
 
-/* HEADER WITH ICONS MOVED DOWN */
 .header {
   display: flex;
-  align-items: flex-start; /* Changed from center to flex-start */
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   height: 72px;
   position: relative;
-  padding-top: 4px; /* Added padding to move everything down */
 }
 
 #dashboardPage .logo-top-left {
@@ -353,10 +255,8 @@ select:focus {
   backdrop-filter: blur(6px);
   box-shadow: 0 4px 20px var(--shadow-color);
   border: 2px solid var(--border-color);
-  animation: fadeIn 0.4s ease-out;
 }
 
-/* ICONS POSITIONED LOWER */
 .icon-box {
   display: inline-flex;
   align-items: center;
@@ -376,21 +276,17 @@ select:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: transform .15s, background .15s;
   color: var(--text-primary);
   border: 1px solid transparent;
-  position: relative;
-  top: 4px; /* Move icons down */
 }
 
 .btn-icon:hover {
-  transform: translateY(-3px) scale(1.1);
+  transform: translateY(-3px);
   background: var(--bg-primary);
   border-color: var(--accent-color);
-  box-shadow: 0 6px 15px var(--shadow-color);
 }
 
-/* HAMBURGER MENU MOVED DOWN */
 .hamburger {
   width: 36px;
   height: 36px;
@@ -400,22 +296,20 @@ select:focus {
   background: var(--accent-color);
   color: var(--text-primary);
   border: 2px solid var(--accent-secondary);
-  transition: all .3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+  transition: all .18s;
   font-size: 20px;
   font-weight: 900;
-  position: relative;
-  top: 4px; /* Move hamburger down */
 }
 
 .hamburger.open {
   background: var(--text-primary);
   color: var(--card-bg);
   border-color: var(--text-primary);
-  transform: rotate(90deg) scale(1.1);
+  transform: rotate(90deg);
 }
 
 .hamburger .line {
-  transition: transform .3s, opacity .3s;
+  transition: transform .18s, opacity .18s;
 }
 
 .search-expander {
@@ -426,8 +320,6 @@ select:focus {
   padding: 6px 8px;
   background: var(--card-bg);
   border: 2px solid var(--border-color);
-  position: relative;
-  top: 4px; /* Move search down */
 }
 
 .search-input {
@@ -438,7 +330,7 @@ select:focus {
   border-radius: 8px;
   background: var(--card-bg);
   color: var(--text-primary);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .18s;
   border: 1px solid var(--border-color);
 }
 
@@ -447,10 +339,8 @@ select:focus {
   opacity: 1;
   border: 2px solid var(--accent-color);
   background: var(--card-bg);
-  animation: expandSearch 0.3s ease-out;
 }
 
-/* ================== SIDEBAR ================== */
 .sidebar {
   position: fixed;
   left: 12px;
@@ -464,7 +354,6 @@ select:focus {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   display: none;
   border: 2px solid var(--border-color);
-  animation: fadeIn 0.3s ease-out;
 }
 
 .sidebar.show {
@@ -499,13 +388,13 @@ select:focus {
   text-align: center;
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .sidebar .nav-item:hover {
   background: var(--accent-color);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .logout-btn {
@@ -517,16 +406,15 @@ select:focus {
   color: #FFFFFF;
   font-weight: 800;
   cursor: pointer;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .logout-btn:hover {
   background: #D32F2F;
   border-color: #B71C1C;
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
-/* ================== POPUP PANELS ================== */
 .pop-panel {
   position: fixed;
   right: 12px;
@@ -541,7 +429,6 @@ select:focus {
   display: none;
   padding: 16px;
   border: 2px solid var(--border-color);
-  animation: fadeIn 0.3s ease-out;
 }
 
 .pop-panel.show {
@@ -565,16 +452,14 @@ select:focus {
   font-size: 14px;
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .pop-item:hover {
   background: var(--accent-color);
   border-color: var(--accent-secondary);
-  transform: translateY(-2px);
 }
 
-/* ================== TASKS ================== */
 .tasks-container {
   margin-top: 24px;
   display: flex;
@@ -589,17 +474,16 @@ select:focus {
   padding: 18px;
   border-radius: 14px;
   box-shadow: 0 6px 20px var(--shadow-color);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
   cursor: pointer;
   border: 2px solid var(--border-color);
   position: relative;
   overflow: hidden;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .task-surface:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 15px 35px var(--shadow-color);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--shadow-color);
   border-color: var(--accent-color);
 }
 
@@ -617,7 +501,6 @@ select:focus {
   line-height: 1.5;
 }
 
-/* ================== ADD TASK BUTTON ================== */
 .add-task-btn {
   position: fixed;
   right: 18px;
@@ -633,9 +516,9 @@ select:focus {
   box-shadow: 
     0 10px 30px var(--glow-color),
     0 0 20px rgba(255, 255, 255, 0.1) inset;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 120;
-  animation: pulse 2s infinite;
+  animation: pulse-glow 2s infinite alternate;
 }
 
 .add-task-btn:hover {
@@ -648,7 +531,19 @@ select:focus {
   animation: none;
 }
 
-/* ================== BACKDROP ================== */
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 
+      0 10px 30px var(--glow-color),
+      0 0 20px rgba(255, 255, 255, 0.1) inset;
+  }
+  100% {
+    box-shadow: 
+      0 15px 40px var(--glow-color),
+      0 0 25px rgba(255, 255, 255, 0.15) inset;
+  }
+}
+
 .backdrop {
   position: fixed;
   left: 0;
@@ -659,15 +554,12 @@ select:focus {
   backdrop-filter: blur(6px);
   z-index: 110;
   display: none;
-  transition: opacity 0.3s ease;
 }
 
 .backdrop.show {
   display: block;
-  animation: fadeIn 0.3s ease-out;
 }
 
-/* ================== ADD/EDIT TASK CARD ================== */
 .add-task-card {
   position: fixed;
   left: 50%;
@@ -682,7 +574,7 @@ select:focus {
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   z-index: 140;
-  transition: bottom .4s cubic-bezier(.2, .9, .3, 1) !important;
+  transition: bottom .36s cubic-bezier(.2, .9, .3, 1);
   overflow: auto;
   border: 2px solid var(--border-color);
 }
@@ -700,7 +592,7 @@ select:focus {
   box-sizing: border-box;
   background: var(--card-bg);
   color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 
 .add-task-card input:focus,
@@ -712,7 +604,6 @@ select:focus {
 
 .add-task-card.show {
   bottom: 46px;
-  animation: slideUp 0.4s ease-out;
 }
 
 .add-task-card h2 {
@@ -743,13 +634,12 @@ select:focus {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .close-task-form:hover {
   background: var(--bg-primary);
   color: var(--text-primary);
-  transform: rotate(90deg) scale(1.1);
 }
 
 .add-footer {
@@ -784,60 +674,15 @@ select:focus {
   width: 100%;
   text-align: center;
   color: #FFFFFF;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .task-back:hover {
   background: var(--text-primary);
   border-color: var(--text-primary);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
-/* ================== LOADING OVERLAY ================== */
-.page-loading {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--bg-primary);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.page-loading.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.loader {
-  width: 50px;
-  height: 50px;
-  border: 5px solid var(--border-color);
-  border-top: 5px solid var(--accent-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
-
-.loading-spinner {
-  display: none;
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: var(--accent-color);
-  animation: spin 1s ease-in-out infinite;
-  margin-left: 10px;
-}
-
-/* ================== EDIT MODAL ================== */
 .edit-modal {
   position: fixed;
   left: 0;
@@ -850,12 +695,10 @@ select:focus {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  transition: opacity 0.3s ease;
 }
 
 .edit-modal.show {
   display: flex;
-  animation: fadeIn 0.3s ease-out;
 }
 
 .edit-card {
@@ -867,7 +710,6 @@ select:focus {
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
   color: var(--text-primary);
   border: 2px solid var(--border-color);
-  animation: slideUp 0.4s ease-out;
 }
 
 .edit-head {
@@ -903,16 +745,15 @@ select:focus {
   background: var(--accent-color);
   color: var(--text-primary);
   border: 2px solid var(--accent-secondary);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .edit-actions button:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
-/* ================== PROFILE CIRCLE ================== */
 .profile-circle {
   width: 130px !important;
   height: 130px !important;
@@ -920,11 +761,6 @@ select:focus {
   border: 4px solid var(--accent-color);
   overflow: hidden;
   background: var(--bg-primary);
-  transition: transform 0.3s ease;
-}
-
-.profile-circle:hover {
-  transform: scale(1.05);
 }
 
 .close-sidebar-btn {
@@ -940,16 +776,15 @@ select:focus {
   cursor: pointer;
   font-weight: 700;
   z-index: 999;
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
 }
 
 .close-sidebar-btn:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.1);
+  transform: translateY(-2px);
 }
 
-/* ================== PROFILE PAGE ================== */
 .profile-page {
   position: fixed;
   inset: 0;
@@ -957,7 +792,6 @@ select:focus {
   z-index: 300;
   overflow-y: auto;
   display: none;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .profile-page:not(.hidden) {
@@ -979,7 +813,6 @@ select:focus {
   gap: 16px;
   box-shadow: 0 10px 30px var(--shadow-color);
   text-align: center;
-  animation: slideUp 0.4s ease-out;
 }
 
 .profile-header {
@@ -990,7 +823,6 @@ select:focus {
   background: #2C1810;
   color: white;
   border-bottom: 2px solid var(--accent-color);
-  animation: fadeIn 0.3s ease-out;
 }
 
 .profile-header h2 {
@@ -1010,13 +842,13 @@ select:focus {
   cursor: pointer;
   display: grid;
   place-content: center;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
 }
 
 .back-btn:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.1);
+  transform: translateY(-2px);
 }
 
 .profile-photo-section {
@@ -1034,11 +866,6 @@ select:focus {
   border: 4px solid var(--accent-color);
   margin-bottom: 16px;
   background: var(--bg-primary);
-  transition: transform 0.3s ease;
-}
-
-.profile-photo-section img:hover {
-  transform: scale(1.05);
 }
 
 .profile-info {
@@ -1066,7 +893,6 @@ select:focus {
   margin: 20px 0;
   text-align: left;
   border: 1px solid var(--border-color);
-  animation: fadeIn 0.5s ease-out;
 }
 
 .profile-bio h3 {
@@ -1085,7 +911,6 @@ select:focus {
   grid-template-columns: repeat(2, 1fr);
   gap: 15px;
   margin: 20px 0;
-  animation: fadeIn 0.6s ease-out;
 }
 
 .stat-item {
@@ -1093,11 +918,6 @@ select:focus {
   padding: 15px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
-  transition: transform 0.3s ease;
-}
-
-.stat-item:hover {
-  transform: translateY(-3px);
 }
 
 .stat-item h4 {
@@ -1124,14 +944,14 @@ select:focus {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
   border: 2px solid var(--border-color);
   background: var(--bg-primary);
   color: var(--text-primary);
 }
 
 .profile-actions button:hover {
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
   border-color: var(--accent-color);
 }
 
@@ -1140,7 +960,6 @@ select:focus {
   border-color: var(--accent-secondary);
 }
 
-/* ================== EDIT PROFILE PAGE ================== */
 .edit-profile-page {
   position: fixed;
   inset: 0;
@@ -1148,7 +967,6 @@ select:focus {
   z-index: 300;
   overflow-y: auto;
   display: none;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .edit-profile-page:not(.hidden) {
@@ -1169,7 +987,6 @@ select:focus {
   flex-direction: column;
   gap: 16px;
   box-shadow: 0 10px 30px var(--shadow-color);
-  animation: slideUp 0.4s ease-out;
 }
 
 .edit-header {
@@ -1180,7 +997,6 @@ select:focus {
   background: #2C1810;
   color: white;
   border-bottom: 2px solid var(--accent-color);
-  animation: fadeIn 0.3s ease-out;
 }
 
 .edit-header h2 {
@@ -1204,12 +1020,6 @@ select:focus {
   border: 4px solid var(--accent-color);
   margin-bottom: 12px;
   background: var(--bg-primary);
-  transition: transform 0.3s ease;
-  cursor: pointer;
-}
-
-.edit-photo img:hover {
-  transform: scale(1.05);
 }
 
 .edit-photo input[type="file"] {
@@ -1225,14 +1035,14 @@ select:focus {
   cursor: pointer;
   color: var(--text-primary);
   border: 2px solid var(--accent-secondary);
-  transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all .2s;
   font-weight: 600;
 }
 
 .edit-photo::after:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .edit-profile-page input,
@@ -1245,7 +1055,6 @@ select:focus {
   color: var(--text-primary);
   font-size: 15px;
   font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .edit-profile-page textarea {
@@ -1268,11 +1077,11 @@ select:focus {
   border-radius: 10px;
   padding: 14px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
 }
 
 #saveEditFull:hover {
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
 }
@@ -1287,7 +1096,8 @@ select:focus {
   color: var(--text-secondary);
 }
 
-/* ================== ABOUT & PRIVACY PAGE ================== */
+
+/* ================== ABOUT & PRIVACY PAGE IMPROVEMENTS ================== */
 .about-content,
 .privacy-content {
   max-width: 780px;
@@ -1297,7 +1107,6 @@ select:focus {
   font-size: 17px;
   color: var(--text-primary);
   text-align: left;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .about-content h3,
@@ -1378,7 +1187,80 @@ select:focus {
   opacity: 0.6;
 }
 
-/* ================== SETTINGS PAGE ================== */
+/* Improve readability with better spacing */
+.about-content > *:first-child,
+.privacy-content > *:first-child {
+  margin-top: 0;
+}
+
+.about-content > *:last-child,
+.privacy-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Add some visual hierarchy */
+.about-content p strong,
+.privacy-content p strong {
+  color: var(--accent-color);
+}
+
+/* Better list styling */
+.about-content ul ul,
+.privacy-content ul ul {
+  margin-left: 20px;
+  margin-top: 8px;
+  list-style: circle;
+}
+
+.about-content ul li,
+.privacy-content ul li {
+  padding-left: 8px;
+}
+
+/* Improve heading spacing */
+.about-content h4 + p,
+.privacy-content h4 + p {
+  margin-top: 8px;
+}
+
+.about-content h3 + p,
+.privacy-content h3 + p {
+  margin-top: 12px;
+}
+
+/* Make lists more readable */
+.about-content ul li::marker,
+.privacy-content ul li::marker {
+  color: var(--accent-color);
+}
+
+/* Add some padding to lists for better mobile experience */
+@media screen and (max-width: 480px) {
+  .about-content,
+  .privacy-content {
+    padding: 0 16px 32px;
+    font-size: 16px;
+  }
+  
+  .about-content h3,
+  .privacy-content h3 {
+    font-size: 24px;
+  }
+  
+  .about-content h4,
+  .privacy-content h4 {
+    font-size: 18px;
+  }
+  
+  .about-content ul,
+  .privacy-content ul,
+  .about-content ol,
+  .privacy-content ol {
+    margin-left: 20px;
+  }
+}
+
+
 .about-page,
 .privacy-page,
 .settings-page {
@@ -1389,7 +1271,6 @@ select:focus {
   z-index: 400;
   overflow-y: auto;
   display: none;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .about-page.show,
@@ -1418,6 +1299,44 @@ select:focus {
   letter-spacing: 0.5px;
 }
 
+.about-content,
+.privacy-content,
+.settings-content {
+  max-width: 780px;
+  margin: 32px auto;
+  padding: 0 24px 48px;
+  line-height: 1.7;
+  font-size: 17px;
+  color: var(--text-primary);
+}
+
+.about-content h3,
+.privacy-content h3,
+.settings-content h3 {
+  font-size: 28px;
+  margin: 32px 0 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent-color);
+}
+
+.about-content h4,
+.privacy-content h4,
+.settings-content h4 {
+  font-size: 20px;
+  margin: 28px 0 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  opacity: 0.92;
+}
+
+.about-content ul {
+  margin-left: 20px;
+  list-style: disc;
+  color: var(--text-primary);
+}
+
 .settings-content button {
   margin-top: 12px;
   background: var(--accent-color);
@@ -1427,13 +1346,13 @@ select:focus {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
 }
 
 .settings-content button:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .settings-section {
@@ -1443,7 +1362,6 @@ select:focus {
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 4px 12px var(--shadow-color);
-  animation: fadeIn 0.5s ease-out;
 }
 
 .settings-section h3 {
@@ -1501,7 +1419,7 @@ select:focus {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
   border: 2px solid;
   white-space: nowrap;
 }
@@ -1515,7 +1433,7 @@ select:focus {
 .setting-btn.primary:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-color);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .setting-btn.success {
@@ -1527,7 +1445,7 @@ select:focus {
 .setting-btn.success:hover {
   background: #388e3c;
   border-color: #2e7d32;
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .setting-btn.danger {
@@ -1539,10 +1457,9 @@ select:focus {
 .setting-btn.danger:hover {
   background: #d32f2f;
   border-color: #b71c1c;
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
-/* ================== THEME PREVIEWS ================== */
 .theme-preview-container {
   display: flex;
   gap: 15px;
@@ -1555,7 +1472,7 @@ select:focus {
   border-radius: 10px;
   border: 3px solid transparent;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1565,14 +1482,14 @@ select:focus {
 }
 
 .theme-preview:hover {
-  transform: translateY(-5px) scale(1.1);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .theme-preview.active {
   border-color: var(--text-primary);
   transform: scale(1.05);
-  box-shadow: 0 0 0 2px var(--accent-color), 0 6px 15px rgba(0,0,0,0.15);
+  box-shadow: 0 0 0 2px var(--accent-color), 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .theme-preview::after {
@@ -1601,7 +1518,7 @@ select:focus {
 
 .theme-preview.dark.active {
   border-color: #bb86fc;
-  box-shadow: 0 0 0 2px #bb86fc, 0 6px 15px rgba(0,0,0,0.15);
+  box-shadow: 0 0 0 2px #bb86fc, 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .theme-preview.blue {
@@ -1612,7 +1529,7 @@ select:focus {
   background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
 }
 
-/* ================== AUTH PAGES THEME FIX ================== */
+/* Force auth pages to always use light theme */
 #loginPage,
 #registerPage,
 #forgotPasswordPage,
@@ -1629,6 +1546,7 @@ select:focus {
   --glow-color: rgba(255, 193, 7, 0.6) !important;
 }
 
+/* Ensure auth pages have white backgrounds */
 #loginPage.content,
 #registerPage.content,
 #forgotPasswordPage.content,
@@ -1636,11 +1554,13 @@ select:focus {
   background: #F8F4E5 !important;
 }
 
+/* Style for the container div */
 .auth-area {
   background: #FFFFFF !important;
   color: #2C1810 !important;
 }
 
+/* Ensure text colors in auth pages stay consistent */
 #loginPage .welcome,
 #registerPage .welcome,
 #forgotPasswordPage .welcome,
@@ -1686,6 +1606,7 @@ select:focus {
   color: #8B7355 !important;
 }
 
+/* Keep Google buttons consistent */
 #loginPage .google-btn,
 #registerPage .google-btn,
 #forgotPasswordPage .google-btn,
@@ -1703,6 +1624,7 @@ select:focus {
   background: #F8F4E5 !important;
 }
 
+/* Ensure the frame background stays consistent */
 #loginPage ~ .frame,
 #registerPage ~ .frame,
 #forgotPasswordPage ~ .frame,
@@ -1710,6 +1632,7 @@ select:focus {
   background: #F8F4E5 !important;
 }
 
+/* Logo should keep its color */
 #loginPage .logo-top-left,
 #registerPage .logo-top-left,
 #forgotPasswordPage .logo-top-left,
@@ -1717,11 +1640,9 @@ select:focus {
   color: #2C1810 !important;
 }
 
-/* ================== CHANGE PASSWORD PAGE ================== */
 #changePasswordPage .content {
   max-width: 420px;
   margin: 0 auto;
-  animation: fadeIn 0.4s ease-out;
 }
 
 #changePasswordPage .welcome {
@@ -1773,7 +1694,6 @@ select:focus {
   border-top: 1px solid var(--border-color);
 }
 
-/* ================== TASK PRIORITY ================== */
 .priority {
   display: inline-block;
   padding: 6px 12px;
@@ -1784,11 +1704,6 @@ select:focus {
   margin-bottom: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-}
-
-.priority:hover {
-  transform: scale(1.05);
 }
 
 .priority.High {
@@ -1806,7 +1721,6 @@ select:focus {
   border-color: #FFD54F;
 }
 
-/* ================== SWIPE ANIMATIONS ================== */
 .swipe-wrap {
   position: relative;
   overflow: hidden;
@@ -1833,40 +1747,178 @@ select:focus {
   transition: transform 0.3s ease;
 }
 
-.archive-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, #4CAF50, #388E3C);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 24px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.task-surface {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  border: 2px solid var(--border-color);
 }
 
-.archive-bg span {
-  font-size: 24px;
-  color: #FFFFFF;
-  transform: scale(0.8);
-  transition: transform 0.3s ease;
+@media screen and (max-width: 480px) {
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .setting-item label {
+    min-width: 100%;
+  }
+  
+  .setting-item .setting-control {
+    width: 100%;
+    min-width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .theme-preview-container {
+    justify-content: center;
+  }
+  
+  .theme-preview {
+    width: 70px;
+    height: 35px;
+  }
+  
+  .theme-preview::after {
+    font-size: 11px;
+    bottom: -22px;
+  }
+  
+  .settings-section {
+    padding: 20px;
+  }
+  
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .frame {
+    max-width: 100%;
+  }
 }
 
-.archive-bg.archive-active {
-  opacity: 1;
+
+
+/* Add this to your style.css file */
+
+/* Force auth pages to always use light theme */
+#loginPage,
+#registerPage,
+#forgotPasswordPage,
+#changePasswordPage {
+  --bg-primary: #F8F4E5 !important;
+  --bg-secondary: #FFFFFF !important;
+  --text-primary: #2C1810 !important;
+  --text-secondary: #8B7355 !important;
+  --accent-color: #FFC107 !important;
+  --accent-secondary: #FFB300 !important;
+  --border-color: #E6D7C4 !important;
+  --card-bg: #FFFFFF !important;
+  --shadow-color: rgba(77, 53, 32, 0.08) !important;
+  --glow-color: rgba(255, 193, 7, 0.6) !important;
 }
 
-.archive-bg.archive-active span {
-  animation: pulse 0.5s ease-in-out;
+/* Ensure auth pages have white backgrounds */
+#loginPage.content,
+#registerPage.content,
+#forgotPasswordPage.content,
+#changePasswordPage.content {
+  background: #F8F4E5 !important;
 }
 
-.delete-bg.delete-active {
-  opacity: 1;
+/* Style for the container div */
+.auth-area {
+  background: #FFFFFF !important;
+  color: #2C1810 !important;
 }
 
-.delete-bg.delete-active span {
-  animation: pulse 0.5s ease-in-out;
+/* Ensure text colors in auth pages stay consistent */
+#loginPage .welcome,
+#registerPage .welcome,
+#forgotPasswordPage .welcome,
+#changePasswordPage .welcome {
+  color: #2C1810 !important;
 }
+
+#loginPage input,
+#loginPage textarea,
+#loginPage select,
+#registerPage input,
+#registerPage textarea,
+#registerPage select,
+#forgotPasswordPage input,
+#forgotPasswordPage textarea,
+#forgotPasswordPage select,
+#changePasswordPage input,
+#changePasswordPage textarea,
+#changePasswordPage select {
+  background: #FFFFFF !important;
+  color: #2C1810 !important;
+  border-color: #E6D7C4 !important;
+}
+
+#loginPage .link,
+#registerPage .link,
+#forgotPasswordPage .link,
+#changePasswordPage .link {
+  color: #FFC107 !important;
+}
+
+#loginPage .remember-me,
+#registerPage .remember-me,
+#forgotPasswordPage .remember-me,
+#changePasswordPage .remember-me {
+  color: #2C1810 !important;
+}
+
+#loginPage .muted,
+#registerPage .muted,
+#forgotPasswordPage .muted,
+#changePasswordPage .muted {
+  color: #8B7355 !important;
+}
+
+/* Keep Google buttons consistent */
+#loginPage .google-btn,
+#registerPage .google-btn,
+#forgotPasswordPage .google-btn,
+#changePasswordPage .google-btn {
+  background: #FFFFFF !important;
+  color: #2C1810 !important;
+  border-color: #E6D7C4 !important;
+}
+
+#loginPage .google-btn:hover,
+#registerPage .google-btn:hover,
+#forgotPasswordPage .google-btn:hover,
+#changePasswordPage .google-btn:hover {
+  border-color: #FFC107 !important;
+  background: #F8F4E5 !important;
+}
+
+/* Ensure the frame background stays consistent */
+#loginPage ~ .frame,
+#registerPage ~ .frame,
+#forgotPasswordPage ~ .frame,
+#changePasswordPage ~ .frame {
+  background: #F8F4E5 !important;
+}
+
+/* Logo should keep its color */
+#loginPage .logo-top-left,
+#registerPage .logo-top-left,
+#forgotPasswordPage .logo-top-left,
+#changePasswordPage .logo-top-left {
+  color: #2C1810 !important;
+}
+
+
+
 
 /* ================== TRASH/ARCHIVE PAGE ================== */
 .trash-page {
@@ -1877,7 +1929,6 @@ select:focus {
   z-index: 400;
   overflow-y: auto;
   display: none;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .trash-page.show {
@@ -1907,7 +1958,6 @@ select:focus {
   line-height: 1.7;
   font-size: 17px;
   color: var(--text-primary);
-  animation: fadeIn 0.4s ease-out;
 }
 
 .trash-stats {
@@ -1929,15 +1979,178 @@ select:focus {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
   border: 2px solid;
   color: white;
 }
 
 .trash-actions button:hover {
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
   opacity: 0.9;
 }
+
+/* Swipe indicators for archive */
+.swipe-indicator {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.archive-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #4CAF50, #388E3C);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 24px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.archive-bg span {
+  font-size: 24px;
+  color: #FFFFFF;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+/* Task in archive styling */
+.task-archived {
+  opacity: 0.7;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--card-bg) 100%);
+}
+
+.task-archived .priority {
+  opacity: 0.6;
+}
+
+/* Swipe delete animation */
+@keyframes swipeLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes swipeRight {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+
+/* ================== SWIPE ANIMATIONS ================== */
+.archive-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #4CAF50, #388E3C);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 24px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.archive-bg span {
+  font-size: 24px;
+  color: #FFFFFF;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+.archive-bg.archive-active {
+  opacity: 1;
+}
+
+.archive-bg.archive-active span {
+  animation: archivePulse 0.5s ease-in-out;
+}
+
+.delete-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #FF9800, #F57C00);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 24px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.delete-bg span {
+  font-size: 24px;
+  color: #FFFFFF;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+.delete-bg.delete-active {
+  opacity: 1;
+}
+
+.delete-bg.delete-active span {
+  animation: deletePulse 0.5s ease-in-out;
+}
+
+@keyframes archivePulse {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes deletePulse {
+  0% { transform: scale(0.8) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(10deg); }
+  50% { transform: scale(1) rotate(-10deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Swipe direction indicators */
+.swipe-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+
+.swipe-left-indicator {
+  left: 10px;
+}
+
+.swipe-right-indicator {
+  right: 10px;
+}
+
+.task-surface {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 20px var(--shadow-color);
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  border: 2px solid var(--border-color);
+  user-select: none;
+}
+
+/* Swipe delete animation */
+@keyframes swipeLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes swipeRight {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
 
 /* ================== TUTORIAL OVERLAY ================== */
 .tutorial-overlay {
@@ -1952,7 +2165,6 @@ select:focus {
   justify-content: center;
   align-items: center;
   padding: 20px;
-  animation: fadeIn 0.4s ease-out;
 }
 
 .tutorial-overlay.show {
@@ -1970,7 +2182,6 @@ select:focus {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   border: 2px solid var(--accent-color);
   color: var(--text-primary);
-  animation: slideUp 0.4s ease-out;
 }
 
 .tutorial-header {
@@ -2001,14 +2212,14 @@ select:focus {
   display: grid;
   place-content: center;
   font-weight: 900;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
   flex-shrink: 0;
 }
 
 .close-tutorial:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-color);
-  transform: translateY(-3px) scale(1.1);
+  transform: translateY(-2px);
 }
 
 .tutorial-step {
@@ -2017,7 +2228,6 @@ select:focus {
   background: var(--bg-primary);
   border-radius: 12px;
   border: 1px solid var(--border-color);
-  animation: fadeIn 0.5s ease-out;
 }
 
 .tutorial-step h3 {
@@ -2075,11 +2285,6 @@ select:focus {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-
-.tutorial-icon:hover {
-  transform: scale(1.1);
 }
 
 .tutorial-arrow {
@@ -2100,7 +2305,7 @@ select:focus {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: all 0.2s;
   border: 2px solid;
   font-size: 15px;
   flex: 1;
@@ -2115,7 +2320,6 @@ select:focus {
 .tutorial-btn.skip:hover {
   background: var(--bg-primary);
   border-color: var(--text-secondary);
-  transform: translateY(-3px);
 }
 
 .tutorial-btn.next {
@@ -2127,7 +2331,7 @@ select:focus {
 .tutorial-btn.next:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-color);
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .tutorial-btn.finish {
@@ -2139,7 +2343,7 @@ select:focus {
 .tutorial-btn.finish:hover {
   background: #388e3c;
   border-color: #2e7d32;
-  transform: translateY(-3px) scale(1.05);
+  transform: translateY(-2px);
 }
 
 .tutorial-progress {
@@ -2155,7 +2359,7 @@ select:focus {
   height: 8px;
   border-radius: 50%;
   background: var(--border-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s;
 }
 
 .progress-dot.active {
@@ -2163,72 +2367,150 @@ select:focus {
   transform: scale(1.2);
 }
 
-/* ================== RESPONSIVE DESIGN ================== */
+/* Mobile-specific adjustments */
 @media screen and (max-width: 480px) {
-  .header-bar {
-    padding: 6px 10px !important;
+  .tutorial-overlay {
+    padding: 10px;
   }
   
-  .btn-icon {
-    padding: 6px !important;
-    font-size: 16px !important;
-    top: 3px !important;
-  }
-  
-  .hamburger {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 18px !important;
-    top: 3px !important;
-  }
-  
-  .search-input.show {
-    width: 140px !important;
-  }
-  
-  .setting-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .setting-item label {
-    min-width: 100%;
-  }
-  
-  .setting-item .setting-control {
-    width: 100%;
-    min-width: 100%;
-    justify-content: flex-start;
-  }
-  
-  .theme-preview-container {
-    justify-content: center;
-  }
-  
-  .theme-preview {
-    width: 70px;
-    height: 35px;
-  }
-  
-  .theme-preview::after {
-    font-size: 11px;
-    bottom: -22px;
-  }
-  
-  .settings-section {
+  .tutorial-content {
     padding: 20px;
+    max-height: 90vh;
   }
   
-  .profile-stats {
-    grid-template-columns: 1fr;
+  .tutorial-header h2 {
+    font-size: 20px;
   }
   
-  .frame {
-    max-width: 100%;
+  .close-tutorial {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
   }
   
-  .trash-stats {
-    grid-template-columns: 1fr;
+  .tutorial-step {
+    padding: 15px;
+  }
+  
+  .tutorial-step h3 {
+    font-size: 16px;
+  }
+  
+  .tutorial-step h3 span {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+  
+  .tutorial-step p {
+    font-size: 14px;
+  }
+  
+  .tutorial-demo {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .tutorial-icon {
+    font-size: 18px;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .tutorial-arrow {
+    font-size: 16px;
+  }
+  
+  .tutorial-buttons {
+    flex-direction: column;
+    margin-top: 20px;
+  }
+  
+  .tutorial-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  /* For the first tutorial step with many icons */
+  .tutorial-demo:first-child {
+    gap: 6px;
+  }
+  
+  .tutorial-demo:first-child .tutorial-icon {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 16px;
+    padding: 6px;
+  }
+  
+  .tutorial-demo:first-child .tutorial-arrow {
+    font-size: 14px;
+  }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 360px) {
+  .tutorial-content {
+    padding: 15px;
+  }
+  
+  .tutorial-header h2 {
+    font-size: 18px;
+  }
+  
+  .tutorial-step {
+    padding: 12px;
+  }
+  
+  .tutorial-step h3 {
+    font-size: 15px;
+  }
+  
+  .tutorial-demo {
+    gap: 5px;
+  }
+  
+  .tutorial-icon {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 16px;
+    padding: 6px;
+  }
+  
+  .tutorial-arrow {
+    font-size: 14px;
+  }
+  
+  /* Reduce icons in first step for very small screens */
+  .tutorial-demo:first-child {
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  
+  .tutorial-demo:first-child .tutorial-icon {
+    min-width: 35px;
+    min-height: 35px;
+    font-size: 14px;
+  }
+  
+  .tutorial-demo:first-child .tutorial-arrow {
+    display: none;
+  }
+}
+
+/* Fix for tutorial step 1 specifically (the one with many icons) */
+#tutorialSteps .tutorial-step:first-child .tutorial-demo {
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+#tutorialSteps .tutorial-step:first-child .tutorial-demo .tutorial-arrow {
+  display: none;
+}
+
+@media screen and (min-width: 481px) {
+  #tutorialSteps .tutorial-step:first-child .tutorial-demo .tutorial-arrow {
+    display: block;
   }
 }
