@@ -1,405 +1,44 @@
-/* ================== BACKEND CONFIGURATION ================== */
-const API_BASE_URL = 'https://taskly-backend-2-qxyx.onrender.com/api'; // Change this to your backend URL
-let authToken = localStorage.getItem('tasklyToken') || null;
-
-/* ================== API HELPER FUNCTIONS ================== */
-async function apiRequest(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-    }
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                // Token expired or invalid
-                localStorage.removeItem('tasklyToken');
-                authToken = null;
-                showPage('loginPage');
-                throw new Error('Session expired. Please log in again.');
-            }
-            throw new Error(`API request failed: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('API Request Error:', error);
-        // Fallback to localStorage for offline mode
-        if (isOffline()) {
-            return { success: false, error: 'Offline mode' };
-        }
-        throw error;
-    }
-}
-
-function isOffline() {
-    return !navigator.onLine;
-}
-
-function setAuthToken(token) {
-    authToken = token;
-    localStorage.setItem('tasklyToken', token);
-}
-
-function clearAuthToken() {
-    authToken = null;
-    localStorage.removeItem('tasklyToken');
-}
-
-/* ================== BACKEND USER FUNCTIONS ================== */
-async function registerUser(userData) {
-    try {
-        const response = await apiRequest('/register', {
-            method: 'POST',
-            body: JSON.stringify({
-                email: userData.email,
-                password: userData.pass,
-                firstName: userData.fName,
-                lastName: userData.lName
-            })
-        });
-
-        if (response.success) {
-            setAuthToken(response.token);
-            setCurrentUser(response.user);
-            initUserData(response.user.email);
-            return { success: true, user: response.user };
-        } else {
-            return { success: false, error: response.error };
-        }
-    } catch (error) {
-        // Fallback to localStorage if backend is unavailable
-        if (isOffline()) {
-            return registerUserLocal(userData);
-        }
-        return { success: false, error: error.message };
-    }
-}
-
-async function loginUser(email, password) {
-    try {
-        const response = await apiRequest('/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password })
-        });
-
-        if (response.success) {
-            setAuthToken(response.token);
-            setCurrentUser(response.user);
-            initUserData(response.user.email);
-            return { success: true, user: response.user };
-        } else {
-            return { success: false, error: response.error };
-        }
-    } catch (error) {
-        // Fallback to localStorage if backend is unavailable
-        if (isOffline()) {
-            return loginUserLocal(email, password);
-        }
-        return { success: false, error: error.message };
-    }
-}
-
-async function getUserProfile() {
-    try {
-        const response = await apiRequest('/profile');
-        if (response.success) {
-            return { success: true, user: response.user };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        const user = getCurrentUser();
-        return { success: true, user: user || {} };
-    }
-}
-
-async function updateUserProfile(updates) {
-    try {
-        const response = await apiRequest('/profile', {
-            method: 'PUT',
-            body: JSON.stringify(updates)
-        });
-
-        if (response.success) {
-            const currentUser = getCurrentUser();
-            const updatedUser = { ...currentUser, ...response.user };
-            setCurrentUser(updatedUser);
-            return { success: true, user: updatedUser };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        const currentUser = getCurrentUser();
-        const updatedUser = { ...currentUser, ...updates };
-        setCurrentUser(updatedUser);
-        updateUserLocal(currentUser.email, updatedUser);
-        return { success: true, user: updatedUser };
-    }
-}
-
-async function changePassword(currentPassword, newPassword) {
-    try {
-        const response = await apiRequest('/change-password', {
-            method: 'POST',
-            body: JSON.stringify({ currentPassword, newPassword })
-        });
-
-        if (response.success) {
-            return { success: true, message: response.message };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        return changePasswordLocal(currentPassword, newPassword);
-    }
-}
-
-/* ================== BACKEND TASK FUNCTIONS ================== */
-async function getTasks() {
-    try {
-        const response = await apiRequest('/tasks');
-        if (response.success) {
-            return { success: true, tasks: response.tasks || [] };
-        }
-        return { success: false, error: response.error, tasks: [] };
-    } catch (error) {
-        // Fallback to localStorage
-        const tasks = getUserTasks();
-        return { success: true, tasks };
-    }
-}
-
-async function createTask(task) {
-    try {
-        const response = await apiRequest('/tasks', {
-            method: 'POST',
-            body: JSON.stringify(task)
-        });
-
-        if (response.success) {
-            return { success: true, task: response.task };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        return createTaskLocal(task);
-    }
-}
-
-async function updateTask(taskId, updates) {
-    try {
-        const response = await apiRequest(`/tasks/${taskId}`, {
-            method: 'PUT',
-            body: JSON.stringify(updates)
-        });
-
-        if (response.success) {
-            return { success: true, task: response.task };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        return updateTaskLocal(taskId, updates);
-    }
-}
-
-async function deleteTask(taskId) {
-    try {
-        const response = await apiRequest(`/tasks/${taskId}`, {
-            method: 'DELETE'
-        });
-
-        if (response.success) {
-            return { success: true };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        return deleteTaskLocal(taskId);
-    }
-}
-
-async function archiveTask(taskId) {
-    try {
-        const response = await apiRequest(`/tasks/${taskId}/archive`, {
-            method: 'POST'
-        });
-
-        if (response.success) {
-            return { success: true, task: response.task };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        return archiveTaskLocal(taskId);
-    }
-}
-
-async function getArchivedTasks() {
-    try {
-        const response = await apiRequest('/tasks/archived');
-        if (response.success) {
-            return { success: true, tasks: response.tasks || [] };
-        }
-        return { success: false, error: response.error, tasks: [] };
-    } catch (error) {
-        // Fallback to localStorage
-        const trash = getUserTrash();
-        return { success: true, tasks: trash };
-    }
-}
-
-async function restoreTask(taskId) {
-    try {
-        const response = await apiRequest(`/tasks/${taskId}/restore`, {
-            method: 'POST'
-        });
-
-        if (response.success) {
-            return { success: true, task: response.task };
-        }
-        return { success: false, error: response.error };
-    } catch (error) {
-        // Fallback to localStorage
-        return restoreTaskLocal(taskId);
-    }
-}
-
-/* ================== LOCALSTORAGE FALLBACK FUNCTIONS ================== */
-function registerUserLocal(userData) {
-    const users = getAllUsers();
-    if (findUserByEmail(userData.email)) {
-        return { success: false, error: 'User already exists' };
-    }
-
-    const user = {
-        ...userData,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        hasSeenTutorial: false
-    };
-
-    saveUser(user);
-    return { success: true, user };
-}
-
-function loginUserLocal(email, password) {
-    const user = findUserByEmail(email.toLowerCase());
-    if (!user) {
-        return { success: false, error: 'User not found' };
-    }
-    if (user.pass !== password) {
-        return { success: false, error: 'Invalid password' };
-    }
-
-    setCurrentUser(user);
-    return { success: true, user };
-}
-
-function changePasswordLocal(currentPassword, newPassword) {
-    const user = getCurrentUser();
-    if (!user) {
-        return { success: false, error: 'User not logged in' };
-    }
-    if (user.pass !== currentPassword) {
-        return { success: false, error: 'Current password is incorrect' };
-    }
-
-    user.pass = newPassword;
-    setCurrentUser(user);
-    updateUserLocal(user.email, user);
-    return { success: true, message: 'Password changed successfully' };
-}
-
-function createTaskLocal(task) {
-    const tasks = getUserTasks();
-    const newTask = {
-        ...task,
-        id: Date.now().toString(),
-        created_at: new Date().toISOString()
-    };
-    tasks.push(newTask);
-    saveUserTasks(tasks);
-    return { success: true, task: newTask };
-}
-
-function updateTaskLocal(taskId, updates) {
-    const tasks = getUserTasks();
-    const index = tasks.findIndex(t => t.id === taskId || t.id === parseInt(taskId));
-    if (index === -1) return { success: false, error: 'Task not found' };
-    
-    tasks[index] = { ...tasks[index], ...updates };
-    saveUserTasks(tasks);
-    return { success: true, task: tasks[index] };
-}
-
-function deleteTaskLocal(taskId) {
-    const tasks = getUserTasks();
-    const index = tasks.findIndex(t => t.id === taskId || t.id === parseInt(taskId));
-    if (index === -1) return { success: false, error: 'Task not found' };
-    
-    tasks.splice(index, 1);
-    saveUserTasks(tasks);
-    return { success: true };
-}
-
-function archiveTaskLocal(taskId) {
-    const tasks = getUserTasks();
-    const index = tasks.findIndex(t => t.id === taskId || t.id === parseInt(taskId));
-    if (index === -1) return { success: false, error: 'Task not found' };
-    
-    const taskToArchive = { 
-        ...tasks[index], 
-        archived: true, 
-        archived_at: new Date().toISOString() 
-    };
-    
-    const trash = getUserTrash();
-    trash.push(taskToArchive);
-    saveUserTrash(trash);
-    
-    tasks.splice(index, 1);
-    saveUserTasks(tasks);
-    return { success: true, task: taskToArchive };
-}
-
-function restoreTaskLocal(taskId) {
-    const trash = getUserTrash();
-    const index = trash.findIndex(t => t.id === taskId || t.id === parseInt(taskId));
-    if (index === -1) return { success: false, error: 'Task not found in archive' };
-    
-    const taskToRestore = { ...trash[index] };
-    delete taskToRestore.archived;
-    delete taskToRestore.archived_at;
-    
-    const tasks = getUserTasks();
-    tasks.push(taskToRestore);
-    saveUserTasks(tasks);
-    
-    trash.splice(index, 1);
-    saveUserTrash(trash);
-    return { success: true, task: taskToRestore };
-}
-
 /* ================== PAGE HISTORY STACK ================== */
 let pageHistory = [];
 
-/* ================== PAGE SWITCHER ================== */
+/* ================== USER-SPECIFIC TASK STORAGE ================== */
+function getCurrentUserEmail() {
+  const user = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+  return user.email || '';
+}
+
+function getUserTasksKey() {
+  const email = getCurrentUserEmail();
+  return email ? `tasklyTasks_${email.replace(/[@.]/g, '_')}` : 'tasklyTasks_guest';
+}
+
+function getUserRemindersKey() {
+  const email = getCurrentUserEmail();
+  return email ? `tasklyReminders_${email.replace(/[@.]/g, '_')}` : 'tasklyReminders_guest';
+}
+
+function getUserTrashKey() {
+  const email = getCurrentUserEmail();
+  return email ? `tasklyTrash_${email.replace(/[@.]/g, '_')}` : 'tasklyTrash_guest';
+}
+
+function getUserProfileImgKey() {
+  const email = getCurrentUserEmail();
+  return email ? `tasklyProfileImg_${email.replace(/[@.]/g, '_')}` : 'tasklyProfileImg_guest';
+}
+
+function getUserThemeKey() {
+  const email = getCurrentUserEmail();
+  return email ? `tasklyTheme_${email.replace(/[@.]/g, '_')}` : 'tasklyTheme_guest';
+}
+
+/* ================== PAGE SWITCHER (final patch) ================== */
 function showPage(id) {
-  // Don't add login/register pages to history
+  // Don't add login/register pages to history (they're starting points)
   if (!['loginPage', 'registerPage', 'forgotPasswordPage', 'changePasswordPage'].includes(id)) {
+    // Remove any existing same page from history
     pageHistory = pageHistory.filter(page => page !== id);
+    // Add to history
     pageHistory.push(id);
   }
 
@@ -408,7 +47,6 @@ function showPage(id) {
     'aboutPage', 'privacyPage', 'settingsPage', 'editProfilePage', 'profilePage',
     'changePasswordPage', 'trashPage'
   ];
-  
   pages.forEach(p => {
     const el = document.getElementById(p);
     if (!el) return;
@@ -433,19 +71,21 @@ function showPage(id) {
   applyTheme();
   updateThemeHeaders();
 }
-
-// Show login page initially
 showPage('loginPage');
 
 /* ================== GO BACK FUNCTION ================== */
 function goBack() {
   if (pageHistory.length <= 1) {
+    // If no history or only one page, go to dashboard
     showPage('dashboardPage');
     pageHistory = ['dashboardPage'];
     return;
   }
 
+  // Remove current page
   pageHistory.pop();
+
+  // Get previous page
   const previousPage = pageHistory[pageHistory.length - 1];
 
   if (previousPage) {
@@ -456,24 +96,35 @@ function goBack() {
   }
 }
 
+/* ---------- AUTH NAVIGATION ---------- */
+document.getElementById('goRegister').addEventListener('click', () => showPage('registerPage'));
+document.getElementById('goLogin').addEventListener('click', () => showPage('loginPage'));
+document.getElementById('forgotPassword').addEventListener('click', () => showPage('forgotPasswordPage'));
+document.getElementById('backToLogin').addEventListener('click', () => showPage('loginPage'));
+
+/* ---------- PASSWORD TOGGLES ---------- */
+function togglePassword(inputId, toggleId) {
+  const input = document.getElementById(inputId);
+  const toggle = document.getElementById(toggleId);
+  if (!input || !toggle) return;
+  toggle.addEventListener('click', () => {
+    if (input.type === 'password') { input.type = 'text'; toggle.textContent = '🙈'; }
+    else { input.type = 'password'; toggle.textContent = '👁️‍🗨️'; }
+  });
+}
+togglePassword('loginPass', 'toggleLoginPass');
+togglePassword('registerPass', 'toggleRegisterPass');
+togglePassword('registerConfirm', 'toggleRegisterConfirm');
+
 /* ================== THEME MANAGEMENT ================== */
 function getTheme() {
-  const currentUser = getCurrentUser();
-  if (currentUser && currentUser.theme) {
-    return currentUser.theme;
-  }
-  return localStorage.getItem('tasklyTheme') || 'light';
+  const userThemeKey = getUserThemeKey();
+  return localStorage.getItem(userThemeKey) || 'light';
 }
 
 function saveTheme(theme) {
-  const currentUser = getCurrentUser();
-  if (currentUser) {
-    currentUser.theme = theme;
-    updateUserLocal(currentUser.email, currentUser);
-    // Also try to update on backend
-    updateUserProfile({ theme });
-  }
-  localStorage.setItem('tasklyTheme', theme);
+  const userThemeKey = getUserThemeKey();
+  localStorage.setItem(userThemeKey, theme);
 }
 
 function applyTheme() {
@@ -494,21 +145,23 @@ function applyTheme() {
 
   // Apply theme to non-auth pages
   if (theme === 'dark') {
+    // Dark theme with purple accent - improved contrast
     root.style.setProperty('--bg-primary', '#121212');
     root.style.setProperty('--bg-secondary', '#1e1e1e');
     root.style.setProperty('--text-primary', '#ffffff');
     root.style.setProperty('--text-secondary', '#b0b0b0');
-    root.style.setProperty('--accent-color', '#bb86fc');
+    root.style.setProperty('--accent-color', '#bb86fc'); // Brighter purple
     root.style.setProperty('--accent-secondary', '#9c64f7');
     root.style.setProperty('--border-color', '#333333');
     root.style.setProperty('--card-bg', '#1e1e1e');
     root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.4)');
     root.style.setProperty('--glow-color', 'rgba(187, 134, 252, 0.6)');
   } else if (theme === 'blue') {
+    // Blue theme - Using dark text for better readability
     root.style.setProperty('--bg-primary', '#e3f2fd');
     root.style.setProperty('--bg-secondary', '#bbdefb');
-    root.style.setProperty('--text-primary', '#0a2942');
-    root.style.setProperty('--text-secondary', '#2c3e50');
+    root.style.setProperty('--text-primary', '#0a2942'); // Dark blue-gray instead of bright blue
+    root.style.setProperty('--text-secondary', '#2c3e50'); // Darker blue-gray
     root.style.setProperty('--accent-color', '#2196f3');
     root.style.setProperty('--accent-secondary', '#1976d2');
     root.style.setProperty('--border-color', '#90caf9');
@@ -516,10 +169,11 @@ function applyTheme() {
     root.style.setProperty('--shadow-color', 'rgba(33, 150, 243, 0.15)');
     root.style.setProperty('--glow-color', 'rgba(33, 150, 243, 0.6)');
   } else if (theme === 'green') {
+    // Green theme - Using dark text for better readability
     root.style.setProperty('--bg-primary', '#e8f5e9');
     root.style.setProperty('--bg-secondary', '#c8e6c9');
-    root.style.setProperty('--text-primary', '#1a331a');
-    root.style.setProperty('--text-secondary', '#2d4d2d');
+    root.style.setProperty('--text-primary', '#1a331a'); // Dark green instead of bright green
+    root.style.setProperty('--text-secondary', '#2d4d2d'); // Darker green
     root.style.setProperty('--accent-color', '#4caf50');
     root.style.setProperty('--accent-secondary', '#388e3c');
     root.style.setProperty('--border-color', '#a5d6a7');
@@ -575,18 +229,25 @@ function toggleTheme(theme) {
   updateThemeHeaders();
 }
 
-/* ================== CHANGE PASSWORD ================== */
+/* ================== CHANGE PASSWORD FUNCTION ================== */
 function openChangePasswordPage() {
   showPage('changePasswordPage');
 }
 
-async function changePassword() {
+function changePassword() {
   const currentPass = document.getElementById('currentPassword').value.trim();
   const newPass = document.getElementById('newPassword').value.trim();
   const confirmPass = document.getElementById('confirmPassword').value.trim();
 
+  const user = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+
   if (!currentPass || !newPass || !confirmPass) {
     alert('Please fill all fields');
+    return;
+  }
+
+  if (currentPass !== user.pass) {
+    alert('Current password is incorrect');
     return;
   }
 
@@ -600,13 +261,18 @@ async function changePassword() {
     return;
   }
 
-  const result = await changePassword(currentPass, newPass);
-  if (result.success) {
-    alert('Password changed successfully!');
-    showPage('settingsPage');
-  } else {
-    alert(result.error || 'Failed to change password');
+  user.pass = newPass;
+  localStorage.setItem('tasklyUser', JSON.stringify(user));
+
+  const users = JSON.parse(localStorage.getItem('tasklyUsers') || '[]');
+  const index = users.findIndex(u => u.email === user.email);
+  if (index !== -1) {
+    users[index].pass = newPass;
+    localStorage.setItem('tasklyUsers', JSON.stringify(users));
   }
+
+  alert('Password changed successfully!');
+  showPage('settingsPage');
 }
 
 /* ================== EMAIL VALIDATION ================== */
@@ -629,27 +295,17 @@ function validateEmail(email) {
   return { isValid: true, message: 'Valid email' };
 }
 
-/* ================== USER DATABASE (LOCALSTORAGE) ================== */
+/* ================== USER DATABASE (LOCAL) ================== */
 function getAllUsers() {
   const usersStr = localStorage.getItem('tasklyUsers');
   return usersStr ? JSON.parse(usersStr) : [];
-}
-
-function getCurrentUser() {
-  const userStr = localStorage.getItem('tasklyUser');
-  return userStr ? JSON.parse(userStr) : null;
-}
-
-function setCurrentUser(user) {
-  localStorage.setItem('tasklyUser', JSON.stringify(user));
 }
 
 function saveUser(user) {
   const users = getAllUsers();
   users.push(user);
   localStorage.setItem('tasklyUsers', JSON.stringify(users));
-  setCurrentUser(user);
-  initUserData(user.email);
+  localStorage.setItem('tasklyUser', JSON.stringify(user));
 }
 
 function findUserByEmail(email) {
@@ -657,94 +313,194 @@ function findUserByEmail(email) {
   return users.find(user => user.email === email);
 }
 
-function updateUserLocal(email, updatedUser) {
+function updateUser(email, updatedUser) {
   const users = getAllUsers();
   const index = users.findIndex(user => user.email === email);
   if (index !== -1) {
     users[index] = { ...users[index], ...updatedUser };
     localStorage.setItem('tasklyUsers', JSON.stringify(users));
 
-    const currentUser = getCurrentUser();
-    if (currentUser && currentUser.email === email) {
-      setCurrentUser(users[index]);
+    const currentUser = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+    if (currentUser.email === email) {
+      localStorage.setItem('tasklyUser', JSON.stringify(users[index]));
     }
     return true;
   }
   return false;
 }
 
-/* ================== USER-SPECIFIC DATA ================== */
-function initUserData(email) {
-  if (!localStorage.getItem(`tasklyTasks_${email}`)) {
-    localStorage.setItem(`tasklyTasks_${email}`, JSON.stringify([]));
+/* ---------- REGISTER ---------- */
+document.getElementById('registerBtn').addEventListener('click', () => {
+  const fName = document.getElementById('registerFirstName').value.trim();
+  const lName = document.getElementById('registerLastName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const pass = document.getElementById('registerPass').value.trim();
+  const conf = document.getElementById('registerConfirm').value.trim();
+
+  if (!fName || !lName || !email || !pass || !conf) {
+    alert('Please fill all fields');
+    return;
   }
-  if (!localStorage.getItem(`tasklyReminders_${email}`)) {
-    localStorage.setItem(`tasklyReminders_${email}`, JSON.stringify([]));
+
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    alert(emailValidation.message);
+    return;
   }
-  if (!localStorage.getItem(`tasklyTrash_${email}`)) {
-    localStorage.setItem(`tasklyTrash_${email}`, JSON.stringify([]));
+
+  if (pass !== conf) {
+    alert('Passwords do not match');
+    return;
   }
-  if (!localStorage.getItem(`tasklyProfileImg_${email}`)) {
-    const defaultImg = `https://ui-avatars.com/api/?name=${encodeURIComponent('User')}&background=FFC107&color=2C1810&size=200`;
-    localStorage.setItem(`tasklyProfileImg_${email}`, defaultImg);
+
+  if (pass.length < 6) {
+    alert('Password must be at least 6 characters');
+    return;
   }
-}
 
-function getUserTasks() {
-  const user = getCurrentUser();
-  if (!user || !user.email) return [];
-  const tasksStr = localStorage.getItem(`tasklyTasks_${user.email}`);
-  return tasksStr ? JSON.parse(tasksStr) : [];
-}
+  const emailLower = email.toLowerCase();
 
-function saveUserTasks(tasks) {
-  const user = getCurrentUser();
-  if (!user || !user.email) return;
-  localStorage.setItem(`tasklyTasks_${user.email}`, JSON.stringify(tasks));
-}
-
-function getUserReminders() {
-  const user = getCurrentUser();
-  if (!user || !user.email) return [];
-  const remindersStr = localStorage.getItem(`tasklyReminders_${user.email}`);
-  return remindersStr ? JSON.parse(remindersStr) : [];
-}
-
-function saveUserReminders(reminders) {
-  const user = getCurrentUser();
-  if (!user || !user.email) return;
-  localStorage.setItem(`tasklyReminders_${user.email}`, JSON.stringify(reminders));
-}
-
-function getUserTrash() {
-  const user = getCurrentUser();
-  if (!user || !user.email) return [];
-  const trashStr = localStorage.getItem(`tasklyTrash_${user.email}`);
-  return trashStr ? JSON.parse(trashStr) : [];
-}
-
-function saveUserTrash(trash) {
-  const user = getCurrentUser();
-  if (!user || !user.email) return;
-  localStorage.setItem(`tasklyTrash_${user.email}`, JSON.stringify(trash));
-}
-
-function getUserProfileImg() {
-  const user = getCurrentUser();
-  if (!user || !user.email) {
-    return 'https://via.placeholder.com/200';
+  if (findUserByEmail(emailLower)) {
+    alert('An account with this email already exists. Please sign in instead.');
+    return;
   }
-  const img = localStorage.getItem(`tasklyProfileImg_${user.email}`);
-  return img || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fName || user.first_name || 'User')}&background=FFC107&color=2C1810&size=200`;
-}
 
-function saveUserProfileImg(imgUrl) {
-  const user = getCurrentUser();
-  if (!user || !user.email) return;
-  localStorage.setItem(`tasklyProfileImg_${user.email}`, imgUrl);
-}
+  const user = {
+    fName,
+    lName,
+    email: emailLower,
+    pass,
+    bio: `Hello! I'm ${fName} ${lName}. I'm using Taskly to organize my tasks.`,
+    isGoogleUser: false,
+    createdAt: new Date().toISOString()
+  };
 
-/* ================== GOOGLE SIGN-IN ================== */
+  saveUser(user);
+
+  // Set default profile image for this user
+  const userProfileImgKey = getUserProfileImgKey();
+  const defaultProfileImg = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fName + ' ' + lName) + '&background=FFC107&color=2C1810&size=200';
+  localStorage.setItem(userProfileImgKey, defaultProfileImg);
+
+  // Initialize empty task storage for this user
+  const tasksKey = `tasklyTasks_${emailLower.replace(/[@.]/g, '_')}`;
+  const remindersKey = `tasklyReminders_${emailLower.replace(/[@.]/g, '_')}`;
+  const trashKey = `tasklyTrash_${emailLower.replace(/[@.]/g, '_')}`;
+  const themeKey = `tasklyTheme_${emailLower.replace(/[@.]/g, '_')}`;
+
+  localStorage.setItem(tasksKey, JSON.stringify([]));
+  localStorage.setItem(remindersKey, JSON.stringify([]));
+  localStorage.setItem(trashKey, JSON.stringify([]));
+  localStorage.setItem(themeKey, 'light');
+
+  alert('Registration successful! Please sign in.');
+  showPage('loginPage');
+});
+
+/* ---------- LOGIN ---------- */
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+
+  if (!email || !pass) {
+    alert('Please enter email and password');
+    return;
+  }
+
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    alert(emailValidation.message);
+    return;
+  }
+
+  const emailLower = email.toLowerCase();
+  const user = findUserByEmail(emailLower);
+
+  if (!user) {
+    alert('No account found with this email. Please register first.');
+    return;
+  }
+
+  if (user.isGoogleUser) {
+    const createPass = confirm('This is a Google account. Would you like to create a password for this account?');
+    if (createPass) {
+      const newPass = prompt('Create a password for your account (min 6 characters):');
+      if (newPass && newPass.length >= 6) {
+        user.pass = newPass;
+        updateUser(emailLower, user);
+        alert('Password created successfully! You can now sign in with email and password.');
+      }
+    }
+    return;
+  }
+
+  if (user.pass !== pass) {
+    alert('Incorrect password. Please try again.');
+    return;
+  }
+
+  localStorage.setItem('tasklyUser', JSON.stringify(user));
+
+  // Initialize user-specific storage if not exists
+  const tasksKey = `tasklyTasks_${emailLower.replace(/[@.]/g, '_')}`;
+  const remindersKey = `tasklyReminders_${emailLower.replace(/[@.]/g, '_')}`;
+  const trashKey = `tasklyTrash_${emailLower.replace(/[@.]/g, '_')}`;
+  const themeKey = `tasklyTheme_${emailLower.replace(/[@.]/g, '_')}`;
+
+  if (!localStorage.getItem(tasksKey)) {
+    localStorage.setItem(tasksKey, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(remindersKey)) {
+    localStorage.setItem(remindersKey, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(trashKey)) {
+    localStorage.setItem(trashKey, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(themeKey)) {
+    localStorage.setItem(themeKey, 'light');
+  }
+
+  showPage('dashboardPage');
+  loadTasks();
+  loadProfilePreview();
+  startReminderTimers();
+  startTutorial();
+});
+
+/* ---------- FORGOT PASSWORD ---------- */
+document.getElementById('resetPasswordBtn').addEventListener('click', () => {
+  const email = document.getElementById('forgotEmail').value.trim();
+
+  if (!email) {
+    alert('Please enter your email address');
+    return;
+  }
+
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    alert(emailValidation.message);
+    return;
+  }
+
+  const emailLower = email.toLowerCase();
+  const user = findUserByEmail(emailLower);
+
+  if (!user) {
+    alert('No account found with this email. Please check and try again.');
+    return;
+  }
+
+  if (user.isGoogleUser) {
+    alert('This is a Google account. Please use Google Sign-In to access your account.');
+    return;
+  }
+
+  alert(`Password reset instructions have been sent to ${emailLower}\n\n(In a real app, this would send an email with reset link)`);
+
+  showPage('loginPage');
+});
+
+/* ================== GOOGLE SIGN-IN SIMULATION ================== */
 function simulateGoogleSignInFlow(isRegister = false) {
   const googleModal = document.createElement('div');
   googleModal.style.cssText = `
@@ -838,7 +594,7 @@ function simulateGoogleSignInFlow(isRegister = false) {
     document.body.removeChild(googleModal);
   });
 
-  document.getElementById('googleContinue').addEventListener('click', async () => {
+  document.getElementById('googleContinue').addEventListener('click', () => {
     const googleEmail = emailInput.value.trim();
 
     if (!googleEmail) {
@@ -853,41 +609,41 @@ function simulateGoogleSignInFlow(isRegister = false) {
     }
 
     const emailLower = googleEmail.toLowerCase();
-    
-    try {
-      // Try backend first
-      const loginResult = await loginUser(emailLower, 'google-temp-password');
-      if (loginResult.success) {
-        document.body.removeChild(googleModal);
-        showPage('dashboardPage');
-        loadTasks();
-        loadProfilePreview();
-        startReminderTimers();
-        alert(`Welcome back ${loginResult.user.firstName || loginResult.user.fName}!`);
-        return;
-      }
-    } catch (error) {
-      // Fallback to localStorage
-      const existingUser = findUserByEmail(emailLower);
-      if (existingUser) {
-        if (existingUser.isGoogleUser) {
-          setCurrentUser(existingUser);
-          document.body.removeChild(googleModal);
-          showPage('dashboardPage');
-          loadTasks();
-          loadProfilePreview();
-          startReminderTimers();
-          alert(`Welcome back ${existingUser.fName}!`);
-        } else {
-          alert('This email is already registered with regular account. Please use email/password login.');
-        }
-        return;
-      }
-    }
+    const existingUser = findUserByEmail(emailLower);
 
-    // New Google user
-    document.body.removeChild(googleModal);
-    createGoogleAccountWithPassword(emailLower);
+    if (existingUser) {
+      localStorage.setItem('tasklyUser', JSON.stringify(existingUser));
+
+      // Initialize user-specific storage if not exists
+      const tasksKey = `tasklyTasks_${emailLower.replace(/[@.]/g, '_')}`;
+      const remindersKey = `tasklyReminders_${emailLower.replace(/[@.]/g, '_')}`;
+      const trashKey = `tasklyTrash_${emailLower.replace(/[@.]/g, '_')}`;
+      const themeKey = `tasklyTheme_${emailLower.replace(/[@.]/g, '_')}`;
+
+      if (!localStorage.getItem(tasksKey)) {
+        localStorage.setItem(tasksKey, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(remindersKey)) {
+        localStorage.setItem(remindersKey, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(trashKey)) {
+        localStorage.setItem(trashKey, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(themeKey)) {
+        localStorage.setItem(themeKey, 'light');
+      }
+
+      document.body.removeChild(googleModal);
+      showPage('dashboardPage');
+      loadTasks();
+      loadProfilePreview();
+      startReminderTimers();
+      startTutorial();
+      alert(`Welcome back ${existingUser.fName}!`);
+    } else {
+      document.body.removeChild(googleModal);
+      createGoogleAccountWithPassword(emailLower);
+    }
   });
 
   emailInput.addEventListener('keypress', (e) => {
@@ -1022,7 +778,7 @@ function createGoogleAccountWithPassword(googleEmail) {
     document.body.removeChild(passwordModal);
   });
 
-  document.getElementById('googleCreateAccount').addEventListener('click', async () => {
+  document.getElementById('googleCreateAccount').addEventListener('click', () => {
     const fName = document.getElementById('googleFirstName').value.trim();
     const lName = document.getElementById('googleLastName').value.trim();
     const password = passwordInput.value.trim();
@@ -1050,38 +806,35 @@ function createGoogleAccountWithPassword(googleEmail) {
       pass: password,
       bio: `Hello! I'm ${fName} ${lName}. I'm using Taskly to organize my tasks.`,
       isGoogleUser: true,
-      createdAt: new Date().toISOString(),
-      theme: 'light',
-      hasSeenTutorial: false
+      createdAt: new Date().toISOString()
     };
 
-    // Try backend registration first
-    const registerResult = await registerUser({
-      email: googleEmail,
-      pass: password,
-      fName,
-      lName
-    });
+    saveUser(googleUser);
 
-    if (registerResult.success) {
-      document.body.removeChild(passwordModal);
-      showPage('dashboardPage');
-      loadTasks();
-      loadProfilePreview();
-      loadProfilePage();
-      startReminderTimers();
-      alert(`Welcome ${fName}! Your account has been created.`);
-    } else {
-      // Fallback to localStorage
-      saveUser(googleUser);
-      document.body.removeChild(passwordModal);
-      showPage('dashboardPage');
-      loadTasks();
-      loadProfilePreview();
-      loadProfilePage();
-      startReminderTimers();
-      alert(`Welcome ${fName}! Your account has been created.`);
-    }
+    // Set profile image for this user
+    const userProfileImgKey = `tasklyProfileImg_${googleEmail.replace(/[@.]/g, '_')}`;
+    const googleProfileImg = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fName + ' ' + lName) + '&background=FFC107&color=2C1810&size=200';
+    localStorage.setItem(userProfileImgKey, googleProfileImg);
+
+    // Initialize empty task storage for this user
+    const tasksKey = `tasklyTasks_${googleEmail.replace(/[@.]/g, '_')}`;
+    const remindersKey = `tasklyReminders_${googleEmail.replace(/[@.]/g, '_')}`;
+    const trashKey = `tasklyTrash_${googleEmail.replace(/[@.]/g, '_')}`;
+    const themeKey = `tasklyTheme_${googleEmail.replace(/[@.]/g, '_')}`;
+
+    localStorage.setItem(tasksKey, JSON.stringify([]));
+    localStorage.setItem(remindersKey, JSON.stringify([]));
+    localStorage.setItem(trashKey, JSON.stringify([]));
+    localStorage.setItem(themeKey, 'light');
+
+    document.body.removeChild(passwordModal);
+    showPage('dashboardPage');
+    loadTasks();
+    loadProfilePreview();
+    loadProfilePage();
+    startReminderTimers();
+    startTutorial();
+    alert(`Welcome ${fName}! Your account has been created.`);
   });
 
   const inputs = ['googleFirstName', 'googleLastName', 'googlePassword', 'googleConfirmPassword'];
@@ -1100,140 +853,176 @@ function createGoogleAccountWithPassword(googleEmail) {
   });
 }
 
-/* ================== SIDEBAR FUNCTIONS ================== */
+document.getElementById('googleSign').addEventListener('click', () => simulateGoogleSignInFlow(false));
+document.getElementById('googleRegister').addEventListener('click', () => simulateGoogleSignInFlow(true));
+
+/* ================== SIDEBAR ================== */
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
 let hambOpen = false;
 
+hamburger.addEventListener('click', () => {
+  hambOpen = true;
+  sidebar.classList.add('show');
+  hamburger.classList.toggle('open', true);
+  hamburger.querySelector('.line').textContent = '✖';
+});
+document.getElementById('closeSidebarBtn').addEventListener('click', () => {
+  hambOpen = false;
+  sidebar.classList.remove('show');
+  hamburger.classList.toggle('open', false);
+  hamburger.querySelector('.line').textContent = '☰';
+});
 function closeSidebar() {
   hambOpen = false;
-  const sidebar = document.getElementById('sidebar');
-  const hamburger = document.getElementById('hamburger');
-  if (sidebar) sidebar.classList.remove('show');
-  if (hamburger) {
-    hamburger.classList.remove('open');
-    const line = hamburger.querySelector('.line');
-    if (line) line.textContent = '☰';
-  }
+  sidebar.classList.remove('show');
+  hamburger.classList.toggle('open', false);
+  hamburger.querySelector('.line').textContent = '☰';
 }
 
-/* ================== PROFILE FUNCTIONS ================== */
+/* ---------- SIDEBAR NAV ---------- */
+document.getElementById('navAbout').addEventListener('click', () => { closeSidebar(); showPage('aboutPage'); });
+document.getElementById('navPrivacy').addEventListener('click', () => { closeSidebar(); showPage('privacyPage'); });
+document.getElementById('navSettings').addEventListener('click', () => { closeSidebar(); showPage('settingsPage'); });
+document.getElementById('navProfile').addEventListener('click', () => { closeSidebar(); loadProfilePage(); showPage('profilePage'); });
+document.getElementById('navTrash').addEventListener('click', () => { closeSidebar(); showPage('trashPage'); });
+document.getElementById('navTutorial').addEventListener('click', () => { closeSidebar(); showTutorialStep(0); tutorialOverlay.classList.add('show'); });
+
+/* ================== PROFILE PANEL ================== */
+const profileIcon = document.getElementById('profileIcon');
+const profilePanel = document.getElementById('profilePanel');
+
 function loadProfilePreview() {
-  const user = getCurrentUser();
-  const img = getUserProfileImg();
-  const profileNameText = document.getElementById('profileNameText');
-  const profileEmailText = document.getElementById('profileEmailText');
-  
-  if (profileNameText && profileEmailText) {
-    if (user && (user.fName || user.first_name)) {
-      profileNameText.textContent = `${user.first_name || user.fName || ''} ${user.last_name || user.lName || ''}`;
-      profileEmailText.textContent = user.email || '';
-    } else {
-      profileNameText.textContent = 'Guest';
-      profileEmailText.textContent = '';
-    }
+  const user = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+  const userProfileImgKey = getUserProfileImgKey();
+  const img = localStorage.getItem(userProfileImgKey) || 'https://via.placeholder.com/200';
+
+  if (user.fName) {
+    document.getElementById('profileNameText').textContent = `${user.fName || ''} ${user.lName || ''}`;
+    document.getElementById('profileEmailText').textContent = user.email || '';
+  } else {
+    document.getElementById('profileNameText').textContent = 'Guest';
+    document.getElementById('profileEmailText').textContent = '';
   }
 }
 
-async function loadProfilePage() {
-  try {
-    const result = await getUserProfile();
-    const user = result.success ? result.user : getCurrentUser();
-    const img = getUserProfileImg();
+function loadProfilePage() {
+  const user = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+  const userProfileImgKey = getUserProfileImgKey();
+  const img = localStorage.getItem(userProfileImgKey) || 'https://via.placeholder.com/200';
 
-    const profilePageName = document.getElementById('profilePageName');
-    const profilePageEmail = document.getElementById('profilePageEmail');
-    const profilePageBio = document.getElementById('profilePageBio');
-    const profilePageImg = document.getElementById('profilePageImg');
-    const profilePageJoinDate = document.getElementById('profilePageJoinDate');
-    const profileTaskStats = document.getElementById('profileTaskStats');
+  document.getElementById('profilePageName').textContent = `${user.fName || ''} ${user.lName || ''}`;
+  document.getElementById('profilePageEmail').textContent = user.email || '';
+  document.getElementById('profilePageBio').textContent = user.bio || 'No bio yet. Click "Edit Profile" to add one!';
+  document.getElementById('profilePageImg').src = img;
 
-    if (profilePageName) profilePageName.textContent = user ? `${user.first_name || user.fName || ''} ${user.last_name || user.lName || ''}` : 'Guest';
-    if (profilePageEmail) profilePageEmail.textContent = user ? user.email : '';
-    if (profilePageBio) profilePageBio.textContent = user ? user.bio || 'No bio yet. Click "Edit Profile" to add one!' : 'Please log in to view profile';
-    if (profilePageImg) profilePageImg.src = img;
-
-    if (user && (user.createdAt || user.created_at) && profilePageJoinDate) {
-      const joinDate = new Date(user.createdAt || user.created_at);
-      profilePageJoinDate.textContent = `Joined ${joinDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
-    } else if (profilePageJoinDate) {
-      profilePageJoinDate.textContent = 'Member since recently';
-    }
-
-    const tasks = getUserTasks();
-    if (profileTaskStats) profileTaskStats.textContent = `${tasks.length} tasks`;
-  } catch (error) {
-    console.error('Error loading profile:', error);
+  if (user.createdAt) {
+    const joinDate = new Date(user.createdAt);
+    document.getElementById('profilePageJoinDate').textContent = `Joined ${joinDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+  } else {
+    document.getElementById('profilePageJoinDate').textContent = 'Member since recently';
   }
+
+  const tasksKey = getUserTasksKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+  document.getElementById('profileTaskStats').textContent = `${tasks.length} tasks`;
 }
+
+// Update profile icon to toggle profile popup
+profileIcon.addEventListener('click', (e) => {
+  e.stopPropagation();
+  notifyPanelClose();
+  profilePanel.classList.toggle('show');
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  profilePanel.classList.remove('show');
+  showPage('loginPage');
+});
+
+// Update the "View Profile" button in profile popup
+document.getElementById('openEditProfileFromPopup').addEventListener('click', () => {
+  profilePanel.classList.remove('show');
+  loadProfilePage(); // Load data into profile page
+  showPage('profilePage');
+});
+
+/* ================== PROFILE PAGE ================== */
+document.getElementById('profilePageEditBtn').addEventListener('click', () => {
+  loadEditProfile(); // Load data into edit form
+  showPage('editProfilePage');
+});
+
+document.getElementById('closeProfilePage').addEventListener('click', () => {
+  goBack();
+});
+
+/* ================== FULL PAGE EDIT PROFILE ================== */
+const editFirstFull = document.getElementById('editFirstFull');
+const editLastFull = document.getElementById('editLastFull');
+const editBioFull = document.getElementById('editBioFull');
+const editProfilePreviewFull = document.getElementById('editProfilePreviewFull');
+const editImageInputFull = document.getElementById('editImageInputFull');
+const saveEditFull = document.getElementById('saveEditFull');
 
 function loadEditProfile() {
-  const user = getCurrentUser();
-  if (!user) {
-    alert('Please log in to edit profile');
-    showPage('loginPage');
-    return;
-  }
-  
-  const editFirstFull = document.getElementById('editFirstFull');
-  const editLastFull = document.getElementById('editLastFull');
-  const editBioFull = document.getElementById('editBioFull');
-  const editProfilePreviewFull = document.getElementById('editProfilePreviewFull');
-  
-  if (editFirstFull) editFirstFull.value = user.first_name || user.fName || '';
-  if (editLastFull) editLastFull.value = user.last_name || user.lName || '';
-  if (editBioFull) editBioFull.value = user.bio || '';
-  const img = getUserProfileImg();
-  if (editProfilePreviewFull) editProfilePreviewFull.src = img;
+  const user = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+  editFirstFull.value = user.fName || '';
+  editLastFull.value = user.lName || '';
+  editBioFull.value = user.bio || '';
+  const userProfileImgKey = getUserProfileImgKey();
+  const img = localStorage.getItem(userProfileImgKey) || 'https://via.placeholder.com/200';
+  editProfilePreviewFull.src = img;
 }
 
-async function saveEditProfile() {
-  const editFirstFull = document.getElementById('editFirstFull');
-  const editLastFull = document.getElementById('editLastFull');
-  const editBioFull = document.getElementById('editBioFull');
-  const editProfilePreviewFull = document.getElementById('editProfilePreviewFull');
-  
-  if (!editFirstFull || !editLastFull) return;
-  
-  const firstName = editFirstFull.value.trim();
-  const lastName = editLastFull.value.trim();
-  const bio = editBioFull ? editBioFull.value.trim() : '';
+document.getElementById('closeEditPage').addEventListener('click', () => {
+  goBack();
+});
 
-  if (!firstName || !lastName) {
+/* save */
+saveEditFull.addEventListener('click', () => {
+  const fName = editFirstFull.value.trim();
+  const lName = editLastFull.value.trim();
+  const bio = editBioFull.value.trim();
+
+  if (!fName || !lName) {
     alert('First name and last name are required');
     return;
   }
 
-  const user = getCurrentUser();
-  if (!user) {
-    alert('Please log in to save changes');
-    return;
-  }
-  
-  const updates = {
-    firstName,
-    lastName,
-    bio
-  };
+  const user = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
+  const updatedUser = { ...user, fName, lName, bio };
 
-  const result = await updateUserProfile(updates);
-  if (result.success) {
-    if (editProfilePreviewFull) {
-      saveUserProfileImg(editProfilePreviewFull.src);
-    }
+  // Save updated user
+  localStorage.setItem('tasklyUser', JSON.stringify(updatedUser));
 
-    alert('Profile updated successfully!');
-    loadProfilePreview();
-    loadProfilePage();
-    showPage('profilePage');
-  } else {
-    alert(result.error || 'Failed to update profile');
-  }
-}
+  // Update in users array
+  updateUser(user.email, updatedUser);
 
-/* ================== EDIT EMAIL ================== */
+  // Save profile image for this user
+  const userProfileImgKey = getUserProfileImgKey();
+  localStorage.setItem(userProfileImgKey, editProfilePreviewFull.src);
+
+  alert('Profile updated successfully!');
+
+  // Refresh all profile displays
+  loadProfilePreview(); // Update dashboard popup
+  loadProfilePage();    // Update profile page
+  pageHistory.push('dashboardPage');
+  showPage('profilePage');// Go back to profile page
+});
+
+/* image upload */
+editImageInputFull.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => editProfilePreviewFull.src = r.result;
+  r.readAsDataURL(f);
+});
+
+/* ================== EDIT EMAIL FUNCTIONALITY ================== */
 function openEditEmailModal() {
-  const currentUser = getCurrentUser();
-  if (!currentUser) return;
-
   const modal = document.createElement('div');
   modal.style.cssText = `
     position: fixed;
@@ -1258,6 +1047,8 @@ function openEditEmailModal() {
     text-align: center;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   `;
+
+  const currentUser = JSON.parse(localStorage.getItem('tasklyUser') || '{}');
 
   content.innerHTML = `
     <h3 style="margin-bottom: 20px; color: #333;">Change Email Address</h3>
@@ -1291,15 +1082,14 @@ function openEditEmailModal() {
   document.body.appendChild(modal);
 
   setTimeout(() => {
-    const input = document.getElementById('newEmailInput');
-    if (input) input.focus();
+    document.getElementById('newEmailInput').focus();
   }, 100);
 
   document.getElementById('cancelEmailChange').addEventListener('click', () => {
     document.body.removeChild(modal);
   });
 
-  document.getElementById('saveEmailChange').addEventListener('click', async () => {
+  document.getElementById('saveEmailChange').addEventListener('click', () => {
     const newEmail = document.getElementById('newEmailInput').value.trim().toLowerCase();
     const password = document.getElementById('confirmPasswordForEmail').value.trim();
     const messageEl = document.getElementById('emailChangeMessage');
@@ -1320,132 +1110,211 @@ function openEditEmailModal() {
       return;
     }
 
-    // Note: Email change would require backend API support
-    // For now, we'll show a message that this feature requires backend
-    messageEl.textContent = 'Email change requires backend API support. Please contact support.';
-    
-    // In a real implementation, you would call an API endpoint here
-    // await apiRequest('/change-email', { method: 'POST', body: JSON.stringify({ newEmail, password }) });
+    if (password !== currentUser.pass) {
+      messageEl.textContent = 'Incorrect password';
+      return;
+    }
+
+    const existingUser = findUserByEmail(newEmail);
+    if (existingUser) {
+      messageEl.textContent = 'This email is already registered';
+      return;
+    }
+
+    // Migrate user data from old email to new email
+    const oldEmailKey = currentUser.email.replace(/[@.]/g, '_');
+    const newEmailKey = newEmail.replace(/[@.]/g, '_');
+
+    // Migrate tasks
+    const oldTasksKey = `tasklyTasks_${oldEmailKey}`;
+    const newTasksKey = `tasklyTasks_${newEmailKey}`;
+    const tasks = localStorage.getItem(oldTasksKey);
+    if (tasks) {
+      localStorage.setItem(newTasksKey, tasks);
+      localStorage.removeItem(oldTasksKey);
+    }
+
+    // Migrate reminders
+    const oldRemindersKey = `tasklyReminders_${oldEmailKey}`;
+    const newRemindersKey = `tasklyReminders_${newEmailKey}`;
+    const reminders = localStorage.getItem(oldRemindersKey);
+    if (reminders) {
+      localStorage.setItem(newRemindersKey, reminders);
+      localStorage.removeItem(oldRemindersKey);
+    }
+
+    // Migrate trash
+    const oldTrashKey = `tasklyTrash_${oldEmailKey}`;
+    const newTrashKey = `tasklyTrash_${newEmailKey}`;
+    const trash = localStorage.getItem(oldTrashKey);
+    if (trash) {
+      localStorage.setItem(newTrashKey, trash);
+      localStorage.removeItem(oldTrashKey);
+    }
+
+    // Migrate profile image
+    const oldProfileImgKey = `tasklyProfileImg_${oldEmailKey}`;
+    const newProfileImgKey = `tasklyProfileImg_${newEmailKey}`;
+    const profileImg = localStorage.getItem(oldProfileImgKey);
+    if (profileImg) {
+      localStorage.setItem(newProfileImgKey, profileImg);
+      localStorage.removeItem(oldProfileImgKey);
+    }
+
+    // Migrate theme
+    const oldThemeKey = `tasklyTheme_${oldEmailKey}`;
+    const newThemeKey = `tasklyTheme_${newEmailKey}`;
+    const theme = localStorage.getItem(oldThemeKey);
+    if (theme) {
+      localStorage.setItem(newThemeKey, theme);
+      localStorage.removeItem(oldThemeKey);
+    }
+
+    updateUser(currentUser.email, {
+      ...currentUser,
+      email: newEmail
+    });
+
+    document.body.removeChild(modal);
+    alert('Email updated successfully! All your data has been migrated.');
+    loadProfilePage();
   });
 }
 
 /* ================== NOTIFICATIONS ================== */
+const notifyIcon = document.getElementById('notifyIcon');
+const notifyPanel = document.getElementById('notifyPanel');
 function notifyPanelOpen() {
   const list = document.getElementById('notifyList');
-  const rems = getUserReminders();
-  if (list) {
-    list.innerHTML = rems.length ? rems.slice().reverse().map(r => `
-      <div class="pop-item">${r.title} — ${new Date(r.reminderAt).toLocaleString()}</div>
-    `).join('') : '<div style="color:#666">No reminders</div>';
-  }
-  const notifyPanel = document.getElementById('notifyPanel');
-  if (notifyPanel) notifyPanel.classList.add('show');
+  const remindersKey = getUserRemindersKey();
+  const rems = JSON.parse(localStorage.getItem(remindersKey) || '[]');
+  list.innerHTML = rems.length ? rems.slice().reverse().map(r => `
+    <div class="pop-item">${r.title} — ${new Date(r.reminderAt).toLocaleString()}</div>
+  `).join('') : '<div style="color:#666">No reminders</div>';
+  notifyPanel.classList.add('show');
 }
+function notifyPanelClose() { notifyPanel.classList.remove('show'); }
+notifyIcon.addEventListener('click', (e) => {
+  e.stopPropagation();
+  profilePanel.classList.remove('show');
+  notifyPanel.classList.contains('show') ? notifyPanelClose() : notifyPanelOpen();
+});
+document.getElementById('clearNotifications').addEventListener('click', () => {
+  const remindersKey = getUserRemindersKey();
+  localStorage.setItem(remindersKey, JSON.stringify([]));
+  document.getElementById('notifyList').innerHTML = '<div style="color:#666">All reminders cleared</div>';
+});
 
-function notifyPanelClose() {
-  const notifyPanel = document.getElementById('notifyPanel');
-  if (notifyPanel) notifyPanel.classList.remove('show');
-}
+/* close panels on outside click */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#profilePanel') && !e.target.closest('#profileIcon')) profilePanel.classList.remove('show');
+  if (!e.target.closest('#notifyPanel') && !e.target.closest('#notifyIcon')) notifyPanelClose();
+});
+
+/* ================== SEARCH ================== */
+const searchIcon = document.getElementById('searchIcon');
+const searchInput = document.getElementById('searchInput');
+searchIcon.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (searchInput.classList.contains('show')) {
+    searchInput.classList.remove('show');
+    searchInput.value = '';
+    loadTasks();
+  } else {
+    searchInput.classList.add('show');
+    searchInput.focus();
+  }
+});
+searchInput.addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const tasksKey = getUserTasksKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+  renderTasksList(tasks.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)));
+});
 
 /* ================== BACKDROP ================== */
-function showBackdrop() {
-  const backdrop = document.getElementById('backdrop');
-  const frame = document.getElementById('frame');
-  if (backdrop) backdrop.classList.add('show');
-  if (frame) frame.classList.add('scaled');
-}
+const backdrop = document.getElementById('backdrop');
+const frame = document.getElementById('frame');
+function showBackdrop() { backdrop.classList.add('show'); frame.classList.add('scaled'); }
+function hideBackdrop() { backdrop.classList.remove('show'); frame.classList.remove('scaled'); }
+backdrop.addEventListener('click', () => { hideAddCard(); hideBackdrop(); });
 
-function hideBackdrop() {
-  const backdrop = document.getElementById('backdrop');
-  const frame = document.getElementById('frame');
-  if (backdrop) backdrop.classList.remove('show');
-  if (frame) frame.classList.remove('scaled');
-}
+/* ================== TASK CRUD & REMINDERS ================== */
+const tasksContainer = document.getElementById('tasksContainer');
+const openAddTaskBtn = document.getElementById('openAddTask');
+const addTaskCard = document.getElementById('addTaskCard');
+const closeTaskCard = document.getElementById('closeTaskCard');
+const saveTaskBtn = document.getElementById('saveTaskBtn');
+const cancelAddBtn = document.getElementById('cancelAddBtn');
+const taskReminderSelect = document.getElementById('taskReminder');
+const taskReminderCustom = document.getElementById('taskReminderCustom');
 
-/* ================== TASK MANAGEMENT ================== */
 let editingIndex = null;
-let editingTaskId = null;
 let reminderTimers = [];
 
-function openAddCard(editTask = null) {
-  editingIndex = editTask ? editTask.index : null;
-  editingTaskId = editTask ? editTask.id : null;
-  const addCardTitle = document.getElementById('addCardTitle');
-  if (addCardTitle) {
-    addCardTitle.textContent = editTask === null ? 'Add New Task' : 'Edit Task';
-  }
-  
-  if (editTask) {
-    document.getElementById('taskTitle').value = editTask.title;
-    document.getElementById('taskDescription').value = editTask.description || editTask.desc || '';
-    document.getElementById('taskDate').value = editTask.date;
-    document.getElementById('taskTime').value = editTask.time;
-    document.getElementById('taskPriority').value = editTask.priority || '';
-    
-    if (editTask.reminder && editTask.reminder.offsetMin != null) {
-      const off = editTask.reminder.offsetMin;
+openAddTaskBtn.addEventListener('click', () => openAddCard());
+closeTaskCard.addEventListener('click', hideAddCard);
+cancelAddBtn.addEventListener('click', hideAddCard);
+
+function openAddCard(editIndex = null, taskObj = null) {
+  editingIndex = editIndex;
+  document.getElementById('addCardTitle').textContent = editIndex === null ? 'Add New Task' : 'Edit Task';
+  if (taskObj) {
+    document.getElementById('taskTitle').value = taskObj.title;
+    document.getElementById('taskDescription').value = taskObj.desc;
+    document.getElementById('taskDate').value = taskObj.date;
+    document.getElementById('taskTime').value = taskObj.time;
+    document.getElementById('taskPriority').value = taskObj.priority || '';
+    if (taskObj.reminder && taskObj.reminder.offsetMin != null) {
+      const off = taskObj.reminder.offsetMin;
       if ([5, 10, 30].includes(off)) {
-        document.getElementById('taskReminder').value = String(off);
-        document.getElementById('taskReminderCustom').style.display = 'none';
+        taskReminderSelect.value = String(off);
+        taskReminderCustom.style.display = 'none';
       } else {
-        document.getElementById('taskReminder').value = 'custom';
-        document.getElementById('taskReminderCustom').style.display = 'inline-block';
-        document.getElementById('taskReminderCustom').value = off;
+        taskReminderSelect.value = 'custom';
+        taskReminderCustom.style.display = 'inline-block';
+        taskReminderCustom.value = off;
       }
     } else {
-      document.getElementById('taskReminder').value = 'none';
-      document.getElementById('taskReminderCustom').style.display = 'none';
-      document.getElementById('taskReminderCustom').value = '';
+      taskReminderSelect.value = 'none';
+      taskReminderCustom.style.display = 'none';
+      taskReminderCustom.value = '';
     }
-  } else {
-    resetAddForm();
-  }
-  
-  const addTaskCard = document.getElementById('addTaskCard');
-  if (addTaskCard) {
-    addTaskCard.classList.add('show');
-    addTaskCard.setAttribute('aria-hidden', 'false');
-    addTaskCard.scrollTop = 0;
-  }
+  } else resetAddForm();
+  addTaskCard.classList.add('show');
+  addTaskCard.setAttribute('aria-hidden', 'false');
   showBackdrop();
+  addTaskCard.scrollTop = 0;
 }
 
 function hideAddCard() {
-  const addTaskCard = document.getElementById('addTaskCard');
-  if (addTaskCard) {
-    addTaskCard.classList.remove('show');
-    addTaskCard.setAttribute('aria-hidden', 'true');
-  }
+  addTaskCard.classList.remove('show');
+  addTaskCard.setAttribute('aria-hidden', 'true');
   resetAddForm();
   hideBackdrop();
 }
 
 function resetAddForm() {
-  ['taskTitle', 'taskDescription', 'taskDate', 'taskTime'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const taskPriority = document.getElementById('taskPriority');
-  if (taskPriority) taskPriority.selectedIndex = 0;
-  const taskReminder = document.getElementById('taskReminder');
-  if (taskReminder) taskReminder.value = 'none';
-  const taskReminderCustom = document.getElementById('taskReminderCustom');
-  if (taskReminderCustom) {
-    taskReminderCustom.style.display = 'none';
-    taskReminderCustom.value = '';
-  }
+  ['taskTitle', 'taskDescription', 'taskDate', 'taskTime'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('taskPriority').selectedIndex = 0;
+  taskReminderSelect.value = 'none';
+  taskReminderCustom.style.display = 'none';
+  taskReminderCustom.value = '';
   editingIndex = null;
-  editingTaskId = null;
 }
 
-async function saveTask() {
+taskReminderSelect.addEventListener('change', (e) => {
+  taskReminderCustom.style.display = e.target.value === 'custom' ? 'inline-block' : 'none';
+});
+
+saveTaskBtn.addEventListener('click', () => {
   const title = document.getElementById('taskTitle').value.trim();
   const desc = document.getElementById('taskDescription').value.trim();
   const date = document.getElementById('taskDate').value;
   const time = document.getElementById('taskTime').value;
   const priority = document.getElementById('taskPriority').value;
-  const remind = document.getElementById('taskReminder').value;
-  const customMin = document.getElementById('taskReminderCustom').value ? parseInt(document.getElementById('taskReminderCustom').value, 10) : null;
+  const remind = taskReminderSelect.value;
+  const customMin = taskReminderCustom.value ? parseInt(taskReminderCustom.value, 10) : null;
 
   if (!title || !desc || !date || !time || !priority) {
     alert('Please fill all fields');
@@ -1464,7 +1333,7 @@ async function saveTask() {
 
   const taskObj = {
     title,
-    description: desc,
+    desc,
     date,
     time,
     priority,
@@ -1475,26 +1344,22 @@ async function saveTask() {
     } : null
   };
 
-  let result;
-  if (editingTaskId) {
-    result = await updateTask(editingTaskId, taskObj);
-  } else {
-    result = await createTask(taskObj);
-  }
-
-  if (result.success) {
-    persistReminders();
-    scheduleAllReminders();
-    hideAddCard();
-    loadTasks();
-  } else {
-    alert(result.error || 'Failed to save task');
-  }
-}
+  const tasksKey = getUserTasksKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+  editingIndex === null ? tasks.push(taskObj) : tasks[editingIndex] = taskObj;
+  localStorage.setItem(tasksKey, JSON.stringify(tasks));
+  persistReminders();
+  scheduleAllReminders();
+  hideAddCard();
+  renderTasksList(tasks);
+});
 
 function persistReminders() {
-  const tasks = getUserTasks();
+  const tasksKey = getUserTasksKey();
+  const remindersKey = getUserRemindersKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
   const rems = [];
+
   tasks.forEach((t, idx) => {
     if (t.reminder && t.reminder.reminderAt) rems.push({
       index: idx,
@@ -1502,7 +1367,7 @@ function persistReminders() {
       reminderAt: t.reminder.reminderAt
     });
   });
-  saveUserReminders(rems);
+  localStorage.setItem(remindersKey, JSON.stringify(rems));
 }
 
 function clearAllTimers() {
@@ -1512,7 +1377,9 @@ function clearAllTimers() {
 
 function scheduleAllReminders() {
   clearAllTimers();
-  const tasks = getUserTasks();
+  const tasksKey = getUserTasksKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+
   tasks.forEach((t, idx) => {
     if (t.reminder && t.reminder.reminderAt) {
       const ms = t.reminder.reminderAt - Date.now();
@@ -1528,38 +1395,58 @@ function scheduleAllReminders() {
   });
 }
 
-function startReminderTimers() {
-  scheduleAllReminders();
-}
+function startReminderTimers() { scheduleAllReminders(); }
 
 /* ================== SWIPE HANDLERS ================== */
-async function doDeleteTask(taskId, index) {
-  if (!confirm('Are you sure you want to delete this task?')) return;
+function doDeleteTask(index) {
+  const tasksKey = getUserTasksKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+  const taskToDelete = tasks[index];
 
-  const result = await deleteTask(taskId);
-  if (result.success) {
-    persistReminders();
-    scheduleAllReminders();
-    loadTasks();
-    alert('Task deleted successfully.');
-  } else {
-    alert(result.error || 'Failed to delete task');
-  }
+  if (!taskToDelete) return;
+
+  // Remove from active tasks
+  tasks.splice(index, 1);
+  localStorage.setItem(tasksKey, JSON.stringify(tasks));
+
+  persistReminders();
+  scheduleAllReminders();
+  loadTasks();
+
+  // Show notification
+  alert(`Task "${taskToDelete.title}" deleted permanently.`);
 }
 
-async function archiveTaskHandler(taskId, index) {
-  const result = await archiveTask(taskId);
-  if (result.success) {
-    persistReminders();
-    scheduleAllReminders();
-    loadTasks();
-    alert(`Task "${result.task.title}" archived. You can restore it from the Archive page.`);
-  } else {
-    alert(result.error || 'Failed to archive task');
-  }
+function archiveTask(index) {
+  const tasksKey = getUserTasksKey();
+  const trashKey = getUserTrashKey();
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+  const taskToArchive = tasks[index];
+
+  if (!taskToArchive) return;
+
+  // Mark as archived
+  taskToArchive.archivedAt = new Date().toISOString();
+  taskToArchive.archived = true;
+
+  // Add to trash (archive)
+  const trash = JSON.parse(localStorage.getItem(trashKey) || '[]');
+  trash.push(taskToArchive);
+  localStorage.setItem(trashKey, JSON.stringify(trash));
+
+  // Remove from active tasks
+  tasks.splice(index, 1);
+  localStorage.setItem(tasksKey, JSON.stringify(tasks));
+
+  persistReminders();
+  scheduleAllReminders();
+  loadTasks();
+
+  // Show notification
+  alert(`Task "${taskToArchive.title}" archived. You can restore it from the Archive page.`);
 }
 
-function attachSwipeHandlers(surface, archiveBg, delBg, task) {
+function attachSwipeHandlers(surface, archiveBg, delBg, index) {
   let startX = 0, currentX = 0, touching = false;
   const threshold = 80;
 
@@ -1572,6 +1459,7 @@ function attachSwipeHandlers(surface, archiveBg, delBg, task) {
     touching = true;
     surface.style.transition = 'none';
 
+    // Reset backgrounds
     archiveBg.classList.remove('archive-active');
     delBg.classList.remove('delete-active');
 
@@ -1585,11 +1473,12 @@ function attachSwipeHandlers(surface, archiveBg, delBg, task) {
     const ev = unify(e);
     currentX = ev.clientX - startX;
 
-    if (currentX < -20) {
+    if (currentX < -20) { // Swiping left (archive)
       const tx = Math.max(currentX, -120);
       surface.style.transform = `translateX(${tx}px)`;
       const ratio = Math.min(Math.abs(tx) / threshold, 1);
 
+      // Show archive background with animation
       archiveBg.style.opacity = ratio;
       delBg.style.opacity = 0;
 
@@ -1599,11 +1488,12 @@ function attachSwipeHandlers(surface, archiveBg, delBg, task) {
         archiveBg.classList.remove('archive-active');
       }
 
-    } else if (currentX > 20) {
+    } else if (currentX > 20) { // Swiping right (delete)
       const tx = Math.min(currentX, 120);
       surface.style.transform = `translateX(${tx}px)`;
       const ratio = Math.min(Math.abs(tx) / threshold, 1);
 
+      // Show delete background with animation
       delBg.style.opacity = ratio;
       archiveBg.style.opacity = 0;
 
@@ -1612,7 +1502,7 @@ function attachSwipeHandlers(surface, archiveBg, delBg, task) {
       } else {
         delBg.classList.remove('delete-active');
       }
-    } else {
+    } else { // Very small movement
       archiveBg.style.opacity = 0;
       delBg.style.opacity = 0;
       archiveBg.classList.remove('archive-active');
@@ -1625,12 +1515,12 @@ function attachSwipeHandlers(surface, archiveBg, delBg, task) {
     surface.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
     if (Math.abs(currentX) > threshold) {
-      if (currentX < 0) {
+      if (currentX < 0) { // Left swipe - Archive
         surface.style.transform = 'translateX(-100%)';
-        setTimeout(() => archiveTaskHandler(task.id, task.index), 300);
-      } else {
+        setTimeout(() => archiveTask(index), 300);
+      } else { // Right swipe - Delete (permanent)
         surface.style.transform = 'translateX(100%)';
-        setTimeout(() => doDeleteTask(task.id, task.index), 300);
+        setTimeout(() => doDeleteTask(index), 300);
       }
     } else {
       surface.style.transform = '';
@@ -1645,26 +1535,29 @@ function attachSwipeHandlers(surface, archiveBg, delBg, task) {
     }
   }
 
+  // Touch events
   surface.addEventListener('touchstart', onStart, { passive: true });
   surface.addEventListener('touchmove', onMove, { passive: true });
   surface.addEventListener('touchend', onEnd, { passive: true });
 
+  // Mouse events
   surface.addEventListener('mousedown', onStart);
   surface.addEventListener('mouseup', onEnd);
   surface.addEventListener('mouseleave', () => {
     if (touching) onEnd({ type: 'mouseup' });
   });
 
+  // Background click events
   archiveBg.addEventListener('click', () => {
     archiveBg.classList.add('archive-active');
     surface.style.transform = 'translateX(-100%)';
-    setTimeout(() => archiveTaskHandler(task.id, task.index), 300);
+    setTimeout(() => archiveTask(index), 300);
   });
 
   delBg.addEventListener('click', () => {
     delBg.classList.add('delete-active');
     surface.style.transform = 'translateX(100%)';
-    setTimeout(() => doDeleteTask(task.id, task.index), 300);
+    setTimeout(() => doDeleteTask(index), 300);
   });
 }
 
@@ -1678,70 +1571,34 @@ function escapeHtml(str) {
   }[s]));
 }
 
-async function renderTasksList(tasks) {
-  const tasksContainer = document.getElementById('tasksContainer');
-  if (!tasksContainer) return;
-  
+function renderTasksList(tasks) {
   tasksContainer.innerHTML = '';
-  
+
   if (!tasks || !tasks.length) {
     const empty = document.createElement('div');
+    empty.className = 'empty-state';
     empty.style.cssText = `
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+      opacity: 0.8;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--text-secondary);
-      margin-top: 40px;
+      min-height: 300px;
     `;
-    
+
     empty.innerHTML = `
-      <div style="
-        font-size: 48px;
-        margin-bottom: 16px;
-        opacity: 0.7;
-        animation: float 3s ease-in-out infinite;
-      ">📝</div>
-      <h3 style="
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: var(--text-primary);
-      ">Your tasks are waiting!</h3>
-      <p style="
-        font-size: 16px;
-        line-height: 1.5;
-        max-width: 280px;
-        margin-bottom: 20px;
-        opacity: 0.9;
-      ">No tasks yet. Tap the <span style="color: var(--accent-color); font-weight: 700;">+</span> button below to add your first task and start organizing!</p>
-      <div style="
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--accent-color);
-        font-weight: 600;
-        font-size: 15px;
-      ">
-        <span>👇</span>
-        <span>Tap the floating button</span>
-        <span>👇</span>
-      </div>
+      <div style="font-size: 60px; margin-bottom: 20px; opacity: 0.5;">📝</div>
+      <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 1.5rem;">Welcome to a fresh start!</h3>
+      <p style="max-width: 300px; line-height: 1.5;">
+        Your task list is empty and waiting for your amazing ideas.<br>
+        Tap the <strong style="color: var(--accent-color);">+</strong> button below to add your first task!
+      </p>
     `;
-    
+
     tasksContainer.appendChild(empty);
-    
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-      }
-    `;
-    document.head.appendChild(style);
-    
     return;
   }
 
@@ -1749,12 +1606,13 @@ async function renderTasksList(tasks) {
     const wrap = document.createElement('div');
     wrap.className = 'swipe-wrap';
     wrap.dataset.index = idx;
-    wrap.dataset.taskId = t.id;
 
+    // Archive background (green for archive) - LEFT SIDE
     const archiveBg = document.createElement('div');
     archiveBg.className = 'archive-bg';
     archiveBg.innerHTML = '<span>📁</span>';
 
+    // Delete background (orange for delete) - RIGHT SIDE
     const delBg = document.createElement('div');
     delBg.className = 'delete-bg';
     delBg.innerHTML = '<span>🗑</span>';
@@ -1765,100 +1623,76 @@ async function renderTasksList(tasks) {
       <div style="position:relative;">
         <div class="priority ${t.priority}">${t.priority}</div>
         <strong>${escapeHtml(t.title)}</strong>
-        <p>${escapeHtml(t.description || t.desc || '')}</p>
+        <p>${escapeHtml(t.desc)}</p>
         <small>${t.date} ${t.time}</small>
       </div>`;
-    
-    surface.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openAddCard({ ...t, index: idx });
-    });
+    surface.addEventListener('click', () => openAddCard(idx, t));
 
-    attachSwipeHandlers(surface, archiveBg, delBg, { ...t, index: idx });
+    // Attach swipe handlers for both directions
+    attachSwipeHandlers(surface, archiveBg, delBg, idx);
 
-    wrap.appendChild(archiveBg);
-    wrap.appendChild(delBg);
+    wrap.appendChild(archiveBg); // Left side - Archive
+    wrap.appendChild(delBg);     // Right side - Delete
     wrap.appendChild(surface);
     tasksContainer.appendChild(wrap);
   });
 }
 
-async function loadTasks() {
-  const result = await getTasks();
-  if (result.success) {
-    renderTasksList(result.tasks);
-    persistReminders();
-  } else {
-    // Fallback to localStorage
-    const tasks = getUserTasks();
-    renderTasksList(tasks);
-    persistReminders();
-  }
+function loadTasks() {
+  const tasksKey = getUserTasksKey();
+  renderTasksList(JSON.parse(localStorage.getItem(tasksKey) || '[]'));
+  persistReminders();
 }
+window.loadTasks = loadTasks;
 
 /* ================== TRASH/ARCHIVE FUNCTIONS ================== */
-async function loadTrashPage() {
-  const result = await getArchivedTasks();
-  const tasks = result.success ? result.tasks : getUserTrash();
+function loadTrashPage() {
+  const trashKey = getUserTrashKey();
+  const trash = JSON.parse(localStorage.getItem(trashKey) || '[]');
   const container = document.getElementById('trashContainer');
 
-  const trashCount = document.getElementById('trashCount');
-  const trashSize = document.getElementById('trashSize');
-  
-  if (trashCount) trashCount.textContent = `${tasks.length} tasks`;
+  // Update stats
+  document.getElementById('trashCount').textContent = `${trash.length} tasks`;
 
-  const trashJSON = JSON.stringify(tasks);
-  const sizeKB = Math.round((trashJSON.length * 2) / 1024);
-  if (trashSize) trashSize.textContent = `${sizeKB} KB`;
+  // Calculate storage size (approximate)
+  const trashJSON = JSON.stringify(trash);
+  const sizeKB = Math.round((trashJSON.length * 2) / 1024); // Approximate size in KB
+  document.getElementById('trashSize').textContent = `${sizeKB} KB`;
 
-  if (!container) return;
+  // Render trash items
   container.innerHTML = '';
 
-  if (!tasks || !tasks.length) {
+  if (!trash || !trash.length) {
     const empty = document.createElement('div');
+    empty.className = 'empty-state';
     empty.style.cssText = `
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+      opacity: 0.8;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--text-secondary);
-      margin-top: 40px;
+      min-height: 300px;
     `;
-    
+
     empty.innerHTML = `
-      <div style="
-        font-size: 48px;
-        margin-bottom: 16px;
-        opacity: 0.7;
-      ">📂</div>
-      <h3 style="
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: var(--text-primary);
-      ">Archive is empty</h3>
-      <p style="
-        font-size: 16px;
-        line-height: 1.5;
-        max-width: 280px;
-        margin-bottom: 20px;
-        opacity: 0.9;
-      ">No archived tasks yet. Swipe left on tasks in your main list to archive them here.</p>
-      <p style="
-        font-size: 14px;
-        color: var(--text-secondary);
-        opacity: 0.8;
-      ">Archived tasks are kept for 30 days</p>
+      <div style="font-size: 60px; margin-bottom: 20px; opacity: 0.5;">📂</div>
+      <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 1.5rem;">Archive is empty</h3>
+      <p style="max-width: 300px; line-height: 1.5;">
+        Swipe tasks <strong style="color: var(--accent-color);">left</strong> to archive them.<br>
+        Archived tasks are kept here for 30 days.
+      </p>
     `;
-    
+
     container.appendChild(empty);
     return;
   }
 
-  const sortedTrash = [...tasks].sort((a, b) => {
-    return new Date(b.archived_at || b.archivedAt || 0) - new Date(a.archived_at || a.archivedAt || 0);
+  // Sort by archive date (newest first)
+  const sortedTrash = [...trash].sort((a, b) => {
+    return new Date(b.archivedAt || 0) - new Date(a.archivedAt || 0);
   });
 
   sortedTrash.forEach((task, index) => {
@@ -1871,14 +1705,14 @@ async function loadTrashPage() {
       <div style="position:relative;">
         <div class="priority ${task.priority}">${task.priority}</div>
         <strong>${escapeHtml(task.title)}</strong>
-        <p>${escapeHtml(task.description || task.desc || '')}</p>
+        <p>${escapeHtml(task.desc)}</p>
         <small>${task.date} ${task.time}</small>
         <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-          Archived: ${task.archived_at || task.archivedAt ? new Date(task.archived_at || task.archivedAt).toLocaleDateString() : 'Unknown'}
+          Archived: ${task.archivedAt ? new Date(task.archivedAt).toLocaleDateString() : 'Unknown'}
         </div>
       </div>
       <div style="display: flex; gap: 8px; margin-top: 12px;">
-        <button class="restore-btn" data-task-id="${task.id}" data-index="${index}" style="
+        <button class="restore-btn" data-index="${index}" style="
           background: var(--success-color); 
           color: white; 
           border: none; 
@@ -1887,7 +1721,7 @@ async function loadTrashPage() {
           font-size: 14px;
           cursor: pointer;
         ">Restore</button>
-        <button class="delete-permanent-btn" data-task-id="${task.id}" data-index="${index}" style="
+        <button class="delete-permanent-btn" data-index="${index}" style="
           background: var(--danger-color); 
           color: white; 
           border: none; 
@@ -1903,49 +1737,226 @@ async function loadTrashPage() {
     container.appendChild(wrap);
   });
 
-  container.addEventListener('click', async (e) => {
+  // Add event listeners to buttons using event delegation
+  container.addEventListener('click', (e) => {
     if (e.target.classList.contains('restore-btn')) {
       e.stopPropagation();
-      const taskId = e.target.dataset.taskId;
       const index = parseInt(e.target.dataset.index);
-      await restoreFromTrash(taskId, index);
+      restoreFromTrash(index);
     } else if (e.target.classList.contains('delete-permanent-btn')) {
       e.stopPropagation();
-      const taskId = e.target.dataset.taskId;
       const index = parseInt(e.target.dataset.index);
-      await deletePermanently(taskId, index);
+      deletePermanently(index);
     }
   });
 }
 
-async function restoreFromTrash(taskId, index) {
-  const result = await restoreTask(taskId);
-  if (result.success) {
-    loadTrashPage();
-    loadTasks();
-    persistReminders();
-    scheduleAllReminders();
-    alert(`Task "${result.task.title}" restored successfully!`);
-  } else {
-    alert(result.error || 'Failed to restore task');
-  }
+function restoreFromTrash(index) {
+  const trashKey = getUserTrashKey();
+  const tasksKey = getUserTasksKey();
+
+  const trash = JSON.parse(localStorage.getItem(trashKey) || '[]');
+  const taskToRestore = trash[index];
+
+  if (!taskToRestore) return;
+
+  // Remove from trash
+  trash.splice(index, 1);
+  localStorage.setItem(trashKey, JSON.stringify(trash));
+
+  // Add back to active tasks
+  const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+
+  // Remove archive properties
+  delete taskToRestore.archivedAt;
+  delete taskToRestore.archived;
+
+  tasks.push(taskToRestore);
+  localStorage.setItem(tasksKey, JSON.stringify(tasks));
+
+  // Update displays
+  loadTrashPage();
+  loadTasks();
+  persistReminders();
+  scheduleAllReminders();
+
+  alert(`Task "${taskToRestore.title}" restored successfully!`);
 }
 
-async function deletePermanently(taskId, index) {
+function deletePermanently(index) {
   if (!confirm('Are you sure you want to permanently delete this task? This action cannot be undone.')) {
     return;
   }
 
-  const result = await deleteTask(taskId);
-  if (result.success) {
-    loadTrashPage();
-    alert('Task permanently deleted.');
-  } else {
-    alert(result.error || 'Failed to delete task');
-  }
+  const trashKey = getUserTrashKey();
+  const trash = JSON.parse(localStorage.getItem(trashKey) || '[]');
+  const taskToDelete = trash[index];
+
+  if (!taskToDelete) return;
+
+  // Remove from trash
+  trash.splice(index, 1);
+  localStorage.setItem(trashKey, JSON.stringify(trash));
+
+  // Update display
+  loadTrashPage();
+
+  alert(`Task "${taskToDelete.title}" permanently deleted.`);
 }
 
+// Initialize trash buttons when DOM is loaded
+document.addEventListener('DOMContentLoaded', function () {
+  // Restore all button
+  const restoreAllBtn = document.getElementById('restoreAllBtn');
+  if (restoreAllBtn) {
+    restoreAllBtn.addEventListener('click', () => {
+      const trashKey = getUserTrashKey();
+      const trash = JSON.parse(localStorage.getItem(trashKey) || '[]');
+
+      if (!trash.length) {
+        alert('No tasks to restore.');
+        return;
+      }
+
+      if (!confirm(`Restore all ${trash.length} archived tasks?`)) {
+        return;
+      }
+
+      const tasksKey = getUserTasksKey();
+      const tasks = JSON.parse(localStorage.getItem(tasksKey) || '[]');
+
+      // Restore all tasks
+      trash.forEach(task => {
+        delete task.archivedAt;
+        delete task.archived;
+        tasks.push(task);
+      });
+
+      // Clear trash
+      localStorage.setItem(trashKey, JSON.stringify([]));
+      localStorage.setItem(tasksKey, JSON.stringify(tasks));
+
+      // Update displays
+      loadTrashPage();
+      loadTasks();
+      persistReminders();
+      scheduleAllReminders();
+
+      alert(`All ${trash.length} tasks restored successfully!`);
+    });
+  }
+
+  // Empty trash button
+  const emptyTrashBtn = document.getElementById('emptyTrashBtn');
+  if (emptyTrashBtn) {
+    emptyTrashBtn.addEventListener('click', () => {
+      const trashKey = getUserTrashKey();
+      const trash = JSON.parse(localStorage.getItem(trashKey) || '[]');
+
+      if (!trash.length) {
+        alert('Trash is already empty.');
+        return;
+      }
+
+      if (!confirm(`Permanently delete all ${trash.length} archived tasks? This action cannot be undone.`)) {
+        return;
+      }
+
+      // Clear trash
+      localStorage.setItem(trashKey, JSON.stringify([]));
+
+      // Update display
+      loadTrashPage();
+
+      alert(`All ${trash.length} tasks permanently deleted.`);
+    });
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    hideAddCard();
+    hideBackdrop();
+  }
+});
+
+const rememberCk = document.getElementById('rememberMe');
+const emailInput = document.getElementById('loginEmail');
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('rememberedEmail');
+  if (saved) {
+    emailInput.value = saved;
+    rememberCk.checked = true;
+  }
+
+  applyTheme();
+  updateThemeHeaders();
+});
+
+document.getElementById('loginBtn').addEventListener('click', () => {
+  if (rememberCk.checked) {
+    localStorage.setItem('rememberedEmail', emailInput.value.trim());
+  } else {
+    localStorage.removeItem('rememberedEmail');
+  }
+});
+
+// Update back buttons for other pages to use goBack function
+document.addEventListener('click', function (e) {
+  // Settings page back button
+  if (e.target.matches('.settings-page .back-btn')) {
+    goBack();
+  }
+  // About page back button
+  if (e.target.matches('.about-page .back-btn')) {
+    goBack();
+  }
+  // Privacy page back button
+  if (e.target.matches('.privacy-page .back-btn')) {
+    goBack();
+  }
+  // Trash page back button
+  if (e.target.matches('.trash-page .back-btn')) {
+    goBack();
+  }
+});
+
+// Fix for edit photo click
+document.querySelector('.edit-photo').addEventListener('click', e => {
+  if (e.target.matches('.edit-photo') || e.offsetY > 130) {
+    document.getElementById('editImageInputFull').click();
+  }
+});
+
+// Initialize global user database if not exists
+if (!localStorage.getItem('tasklyUsers')) {
+  localStorage.setItem('tasklyUsers', JSON.stringify([]));
+}
+
+loadProfilePreview();
+loadTasks();
+startReminderTimers();
+applyTheme();
+updateThemeHeaders();
+
+window.openEditEmailModal = openEditEmailModal;
+window.toggleTheme = toggleTheme;
+window.openChangePasswordPage = openChangePasswordPage;
+window.changePassword = changePassword;
+window.loadEditProfile = loadEditProfile;
+window.loadProfilePage = loadProfilePage;
+window.goBack = goBack;
+
+
+
 /* ================== TUTORIAL SYSTEM ================== */
+const tutorialOverlay = document.getElementById('tutorialOverlay');
+const tutorialSteps = document.getElementById('tutorialSteps');
+const tutorialProgress = document.getElementById('tutorialProgress');
+const nextTutorialBtn = document.getElementById('nextTutorial');
+const skipTutorialBtn = document.getElementById('skipTutorial');
+const closeTutorialBtn = document.getElementById('closeTutorial');
+
 let currentStep = 0;
 const totalSteps = 5;
 
@@ -2033,13 +2044,8 @@ const tutorialData = [
 
 function showTutorialStep(step) {
   currentStep = step;
-  const tutorialSteps = document.getElementById('tutorialSteps');
-  const tutorialProgress = document.getElementById('tutorialProgress');
-  const nextTutorialBtn = document.getElementById('nextTutorial');
-  const skipTutorialBtn = document.getElementById('skipTutorial');
 
-  if (!tutorialSteps || !tutorialProgress || !nextTutorialBtn || !skipTutorialBtn) return;
-
+  // Update step content
   tutorialSteps.innerHTML = `
     <div class="tutorial-step">
       <h3><span>${step + 1}</span> ${tutorialData[step].title}</h3>
@@ -2048,6 +2054,7 @@ function showTutorialStep(step) {
     </div>
   `;
 
+  // Update progress dots
   tutorialProgress.innerHTML = '';
   for (let i = 0; i < totalSteps; i++) {
     const dot = document.createElement('div');
@@ -2055,6 +2062,7 @@ function showTutorialStep(step) {
     tutorialProgress.appendChild(dot);
   }
 
+  // Update button text
   if (step === totalSteps - 1) {
     nextTutorialBtn.textContent = 'Finish Tutorial';
     nextTutorialBtn.className = 'tutorial-btn finish';
@@ -2063,441 +2071,47 @@ function showTutorialStep(step) {
     nextTutorialBtn.className = 'tutorial-btn next';
   }
 
+  // Show/hide skip button
   skipTutorialBtn.style.display = step === totalSteps - 1 ? 'none' : 'block';
 }
 
-function endTutorial() {
-  const tutorialOverlay = document.getElementById('tutorialOverlay');
-  if (tutorialOverlay) tutorialOverlay.classList.remove('show');
-  const user = getCurrentUser();
-  if (user) {
-    user.hasSeenTutorial = true;
-    updateUserLocal(user.email, user);
-    updateUserProfile({ hasSeenTutorial: true });
+function startTutorial() {
+  // Check if user has seen tutorial before
+  const hasSeenTutorial = localStorage.getItem('tasklyTutorialSeen');
+
+  if (!hasSeenTutorial) {
+    // Wait a moment for dashboard to load, then show tutorial
+    setTimeout(() => {
+      showTutorialStep(0);
+      tutorialOverlay.classList.add('show');
+    }, 1000);
   }
 }
 
-function handleNextTutorial() {
+function endTutorial() {
+  tutorialOverlay.classList.remove('show');
+  localStorage.setItem('tasklyTutorialSeen', 'true');
+}
+
+// Event listeners for tutorial
+nextTutorialBtn.addEventListener('click', () => {
   if (currentStep < totalSteps - 1) {
     showTutorialStep(currentStep + 1);
   } else {
     endTutorial();
   }
-}
+});
 
-/* ================== EVENT LISTENERS INITIALIZATION ================== */
-function initializeEventListeners() {
-  // Navigation
-  document.getElementById('goRegister')?.addEventListener('click', () => showPage('registerPage'));
-  document.getElementById('goLogin')?.addEventListener('click', () => showPage('loginPage'));
-  document.getElementById('forgotPassword')?.addEventListener('click', () => showPage('forgotPasswordPage'));
-  document.getElementById('backToLogin')?.addEventListener('click', () => showPage('loginPage'));
+skipTutorialBtn.addEventListener('click', endTutorial);
+closeTutorialBtn.addEventListener('click', endTutorial);
 
-  // Login
-  document.getElementById('loginBtn')?.addEventListener('click', async () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPass').value.trim();
-
-    if (!email || !pass) {
-      alert('Please enter email and password');
-      return;
-    }
-
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      alert(emailValidation.message);
-      return;
-    }
-
-    const emailLower = email.toLowerCase();
-    const result = await loginUser(emailLower, pass);
-
-    if (result.success) {
-      showPage('dashboardPage');
-      loadTasks();
-      loadProfilePreview();
-      startReminderTimers();
-      
-      if (!result.user.hasSeenTutorial) {
-        setTimeout(() => {
-          showTutorialStep(0);
-          document.getElementById('tutorialOverlay').classList.add('show');
-          updateUserProfile({ hasSeenTutorial: true });
-        }, 1000);
-      }
-    } else {
-      alert(result.error || 'Login failed');
-    }
-  });
-
-  // Register
-  document.getElementById('registerBtn')?.addEventListener('click', handleRegister);
-
-  // Forgot password
-  document.getElementById('resetPasswordBtn')?.addEventListener('click', handleForgotPassword);
-
-  // Google buttons
-  document.getElementById('googleSign')?.addEventListener('click', () => simulateGoogleSignInFlow(false));
-  document.getElementById('googleRegister')?.addEventListener('click', () => simulateGoogleSignInFlow(true));
-
-  // Task buttons
-  document.getElementById('openAddTask')?.addEventListener('click', () => openAddCard());
-  document.getElementById('saveTaskBtn')?.addEventListener('click', saveTask);
-  document.getElementById('cancelAddBtn')?.addEventListener('click', hideAddCard);
-  document.getElementById('closeTaskCard')?.addEventListener('click', hideAddCard);
-
-  // Task reminder select
-  document.getElementById('taskReminder')?.addEventListener('change', (e) => {
-    document.getElementById('taskReminderCustom').style.display = e.target.value === 'custom' ? 'inline-block' : 'none';
-  });
-
-  // Sidebar
-  document.getElementById('hamburger')?.addEventListener('click', () => {
-    document.getElementById('sidebar').classList.add('show');
-    document.getElementById('hamburger').classList.add('open');
-    const line = document.getElementById('hamburger').querySelector('.line');
-    if (line) line.textContent = '✖';
-  });
-
-  document.getElementById('closeSidebarBtn')?.addEventListener('click', closeSidebar);
-
-  // Sidebar navigation
-  document.getElementById('navAbout')?.addEventListener('click', () => { closeSidebar(); showPage('aboutPage'); });
-  document.getElementById('navPrivacy')?.addEventListener('click', () => { closeSidebar(); showPage('privacyPage'); });
-  document.getElementById('navSettings')?.addEventListener('click', () => { closeSidebar(); showPage('settingsPage'); });
-  document.getElementById('navProfile')?.addEventListener('click', () => { closeSidebar(); loadProfilePage(); showPage('profilePage'); });
-  document.getElementById('navTrash')?.addEventListener('click', () => { closeSidebar(); showPage('trashPage'); });
-  document.getElementById('navTutorial')?.addEventListener('click', () => { closeSidebar(); showTutorialStep(0); document.getElementById('tutorialOverlay').classList.add('show'); });
-
-  // Profile and notifications
-  document.getElementById('profileIcon')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    notifyPanelClose();
-    document.getElementById('profilePanel').classList.toggle('show');
-  });
-
-  document.getElementById('notifyIcon')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('profilePanel').classList.remove('show');
-    const notifyPanel = document.getElementById('notifyPanel');
-    notifyPanel.classList.contains('show') ? notifyPanelClose() : notifyPanelOpen();
-  });
-
-  document.getElementById('logoutBtn')?.addEventListener('click', () => {
-    document.getElementById('profilePanel').classList.remove('show');
-    clearAuthToken();
-    localStorage.removeItem('tasklyUser');
-    showPage('loginPage');
-  });
-
-  document.getElementById('openEditProfileFromPopup')?.addEventListener('click', () => {
-    document.getElementById('profilePanel').classList.remove('show');
-    loadProfilePage();
-    showPage('profilePage');
-  });
-
-  // Profile page
-  document.getElementById('profilePageEditBtn')?.addEventListener('click', () => {
-    loadEditProfile();
-    showPage('editProfilePage');
-  });
-
-  document.getElementById('closeProfilePage')?.addEventListener('click', () => goBack());
-
-  // Edit profile page
-  document.getElementById('closeEditPage')?.addEventListener('click', () => goBack());
-  document.getElementById('saveEditFull')?.addEventListener('click', saveEditProfile);
-
-  // Edit profile image
-  document.getElementById('editImageInputFull')?.addEventListener('change', (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => {
-      document.getElementById('editProfilePreviewFull').src = r.result;
-      saveUserProfileImg(r.result);
-    };
-    r.readAsDataURL(f);
-  });
-
-  // Notifications
-  document.getElementById('clearNotifications')?.addEventListener('click', () => {
-    saveUserReminders([]);
-    const notifyList = document.getElementById('notifyList');
-    if (notifyList) notifyList.innerHTML = '<div style="color:#666">All reminders cleared</div>';
-  });
-
-  // Search
-  document.getElementById('searchIcon')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput.classList.contains('show')) {
-      searchInput.classList.remove('show');
-      searchInput.value = '';
-      loadTasks();
-    } else {
-      searchInput.classList.add('show');
-      searchInput.focus();
-    }
-  });
-
-  document.getElementById('searchInput')?.addEventListener('input', async (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    const result = await getTasks();
-    const tasks = result.success ? result.tasks : getUserTasks();
-    const filteredTasks = tasks.filter(t => 
-      (t.title + ' ' + (t.description || t.desc || '')).toLowerCase().includes(q)
-    );
-    renderTasksList(filteredTasks);
-  });
-
-  // Backdrop
-  document.getElementById('backdrop')?.addEventListener('click', () => {
-    hideAddCard();
-    hideBackdrop();
-  });
-
-  // Password toggles
-  document.getElementById('toggleLoginPass')?.addEventListener('click', () => {
-    const input = document.getElementById('loginPass');
-    const toggle = document.getElementById('toggleLoginPass');
-    if (input.type === 'password') {
-      input.type = 'text';
-      toggle.textContent = '🙈';
-    } else {
-      input.type = 'password';
-      toggle.textContent = '👁️‍🗨️';
-    }
-  });
-
-  document.getElementById('toggleRegisterPass')?.addEventListener('click', () => {
-    const input = document.getElementById('registerPass');
-    const toggle = document.getElementById('toggleRegisterPass');
-    if (input.type === 'password') {
-      input.type = 'text';
-      toggle.textContent = '🙈';
-    } else {
-      input.type = 'password';
-      toggle.textContent = '👁️‍🗨️';
-    }
-  });
-
-  document.getElementById('toggleRegisterConfirm')?.addEventListener('click', () => {
-    const input = document.getElementById('registerConfirm');
-    const toggle = document.getElementById('toggleRegisterConfirm');
-    if (input.type === 'password') {
-      input.type = 'text';
-      toggle.textContent = '🙈';
-    } else {
-      input.type = 'password';
-      toggle.textContent = '👁️‍🗨️';
-    }
-  });
-
-  // Remember me
-  document.getElementById('rememberMe')?.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      localStorage.setItem('rememberedEmail', document.getElementById('loginEmail').value);
-    } else {
-      localStorage.removeItem('rememberedEmail');
-    }
-  });
-
-  // Theme previews
-  document.querySelectorAll('.theme-preview').forEach(preview => {
-    preview.addEventListener('click', () => {
-      const theme = preview.dataset.theme;
-      toggleTheme(theme);
-    });
-  });
-
-  // Close panels on outside click
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#profilePanel') && !e.target.closest('#profileIcon')) {
-      document.getElementById('profilePanel')?.classList.remove('show');
-    }
-    if (!e.target.closest('#notifyPanel') && !e.target.closest('#notifyIcon')) {
-      document.getElementById('notifyPanel')?.classList.remove('show');
-    }
-    if (!e.target.closest('#sidebar') && !e.target.closest('#hamburger')) {
-      closeSidebar();
-    }
-  });
-
-  // Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      hideAddCard();
-      hideBackdrop();
-      document.getElementById('tutorialOverlay')?.classList.remove('show');
-    }
-  });
-
-  // Tutorial
-  document.getElementById('nextTutorial')?.addEventListener('click', handleNextTutorial);
-  document.getElementById('skipTutorial')?.addEventListener('click', endTutorial);
-  document.getElementById('closeTutorial')?.addEventListener('click', endTutorial);
-  document.getElementById('tutorialOverlay')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('tutorialOverlay')) {
-      endTutorial();
-    }
-  });
-
-  // Change password
-  const changePasswordBtn = document.querySelector('#changePasswordPage .btn-primary');
-  if (changePasswordBtn) {
-    changePasswordBtn.addEventListener('click', changePassword);
-  }
-
-  // Trash page buttons
-  document.getElementById('restoreAllBtn')?.addEventListener('click', async () => {
-    const result = await getArchivedTasks();
-    const tasks = result.success ? result.tasks : getUserTrash();
-    if (!tasks.length) {
-      alert('No tasks to restore.');
-      return;
-    }
-    if (!confirm(`Restore all ${tasks.length} archived tasks?`)) {
-      return;
-    }
-
-    // Note: This would require a bulk restore endpoint
-    alert('Bulk restore requires backend API support. Please restore tasks individually.');
-  });
-
-  document.getElementById('emptyTrashBtn')?.addEventListener('click', () => {
-    const trash = getUserTrash();
-    if (!trash.length) {
-      alert('Trash is already empty.');
-      return;
-    }
-    if (!confirm(`Permanently delete all ${trash.length} archived tasks? This action cannot be undone.`)) {
-      return;
-    }
-    saveUserTrash([]);
-    loadTrashPage();
-    alert(`All ${trash.length} tasks permanently deleted.`);
-  });
-
-  // Edit photo click
-  const editPhoto = document.querySelector('.edit-photo');
-  if (editPhoto) {
-    editPhoto.addEventListener('click', e => {
-      if (e.target.matches('.edit-photo') || e.offsetY > 130) {
-        document.getElementById('editImageInputFull').click();
-      }
-    });
-  }
-}
-
-async function handleRegister() {
-  const fName = document.getElementById('registerFirstName').value.trim();
-  const lName = document.getElementById('registerLastName').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const pass = document.getElementById('registerPass').value.trim();
-  const conf = document.getElementById('registerConfirm').value.trim();
-
-  if (!fName || !lName || !email || !pass || !conf) {
-    alert('Please fill all fields');
-    return;
-  }
-
-  const emailValidation = validateEmail(email);
-  if (!emailValidation.isValid) {
-    alert(emailValidation.message);
-    return;
-  }
-
-  if (pass !== conf) {
-    alert('Passwords do not match');
-    return;
-  }
-
-  if (pass.length < 6) {
-    alert('Password must be at least 6 characters');
-    return;
-  }
-
-  const emailLower = email.toLowerCase();
-  const result = await registerUser({
-    email: emailLower,
-    pass,
-    fName,
-    lName
-  });
-
-  if (result.success) {
-    alert('Registration successful! Please sign in.');
-    showPage('loginPage');
-  } else {
-    alert(result.error || 'Registration failed');
-  }
-}
-
-function handleForgotPassword() {
-  const email = document.getElementById('forgotEmail').value.trim();
-
-  if (!email) {
-    alert('Please enter your email address');
-    return;
-  }
-
-  const emailValidation = validateEmail(email);
-  if (!emailValidation.isValid) {
-    alert(emailValidation.message);
-    return;
-  }
-
-  alert(`Password reset instructions have been sent to ${email}\n\n(In a real app, this would send an email with reset link)`);
-  showPage('loginPage');
-}
-
-/* ================== INITIALIZATION ================== */
-window.addEventListener('DOMContentLoaded', async () => {
-  // Load remembered email
-  const savedEmail = localStorage.getItem('rememberedEmail');
-  if (savedEmail) {
-    document.getElementById('loginEmail').value = savedEmail;
-    document.getElementById('rememberMe').checked = true;
-  }
-
-  // Initialize data
-  if (!localStorage.getItem('tasklyUsers')) {
-    localStorage.setItem('tasklyUsers', JSON.stringify([]));
-  }
-
-  // Initialize event listeners
-  initializeEventListeners();
-
-  // Apply theme
-  applyTheme();
-  updateThemeHeaders();
-
-  // Load data if logged in
-  const token = localStorage.getItem('tasklyToken');
-  if (token) {
-    authToken = token;
-    try {
-      const result = await getUserProfile();
-      if (result.success) {
-        setCurrentUser(result.user);
-        loadProfilePreview();
-        loadTasks();
-        startReminderTimers();
-      }
-    } catch (error) {
-      console.error('Failed to load user profile:', error);
-    }
+// Close tutorial when clicking outside content
+tutorialOverlay.addEventListener('click', (e) => {
+  if (e.target === tutorialOverlay) {
+    endTutorial();
   }
 });
 
-// Make functions available globally
-window.showPage = showPage;
-window.goBack = goBack;
-window.toggleTheme = toggleTheme;
-window.openChangePasswordPage = openChangePasswordPage;
-window.changePassword = changePassword;
-window.loadTasks = loadTasks;
-window.openEditEmailModal = openEditEmailModal;
-window.loadEditProfile = loadEditProfile;
-window.loadProfilePage = loadProfilePage;
+// Also add to Google Sign-In success
+// In the simulateGoogleSignInFlow function, where it shows dashboard after login,
+// startTutorial() is already called in the login event
